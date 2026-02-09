@@ -1,0 +1,8 @@
+#!/bin/bash
+# Wrapper for wechat-api.ts with automatic runtime detection
+
+# Get the directory where this script is located (bin/)
+BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS_DIR="$(cd "$BIN_DIR/../scripts" && pwd)"
+
+"$BIN_DIR/run.sh" "$SCRIPTS_DIR/wechat-api.ts" "$@"

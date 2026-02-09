@@ -8,16 +8,22 @@
     "postinstall": "node -e \"console.log('\\n✓ Dependencies installed successfully!\\n')\""
   },
   "optionalDependencies": {
-    "@napi-rs/canvas": "^0.1.58",
+    "@napi-rs/canvas": "^0.1.90",
     "sharp": "^0.33.5"
   },
   "dependencies": {
+    "fflate": "^0.8.2",
+    "front-matter": "^4.0.2",
+    "highlight.js": "^11.11.1",
     "juice": "^10.0.1",
+    "katex": "^0.16.28",
     "markdown-it": "^14.1.0",
+    "markdown-it-container": "^4.0.0",
     "markdown-it-footnote": "^4.0.0",
-    "markdown-it-container": "^4.0.0"
+    "marked": "^17.0.1",
+    "reading-time": "^1.5.0",
+    "tsx": "^4.19.2"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">=18.0.0"
   },

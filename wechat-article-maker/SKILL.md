@@ -9,49 +9,131 @@ description: 智能创作并发布微信公众号文章。支持内容理解、�
 
 **匹配用户语言**：使用用户所用的语言进行回应。用户用中文则用中文回应，用英文则用英文回应。
 
-## 脚本目录
+## 目录结构
 
-**Agent 执行**：确定此 SKILL.md 目录为 `SKILL_DIR`，然后使用 `${SKILL_DIR}/scripts/<name>.ts`。
+```
+wechat-article-maker/
+├── bin/                      # 可执行脚本（跨平台）
+│   ├── run.sh               # Unix/Linux/macOS 运行时检测
+│   ├── run.js               # 跨平台运行时检测（Node.js）
+│   ├── wechat-api           # Unix/Linux/macOS
+│   ├── wechat-api.bat       # Windows
+│   ├── wechat-article       # Unix/Linux/macOS
+│   ├── wechat-article.bat   # Windows
+│   ├── wechat-browser       # Unix/Linux/macOS
+│   ├── wechat-browser.bat   # Windows
+│   ├── generate-cover       # Unix/Linux/macOS
+│   ├── generate-cover.bat   # Windows
+│   ├── md-to-wechat         # Unix/Linux/macOS
+│   ├── md-to-wechat.bat     # Windows
+│   ├── install-deps.sh      # Unix/Linux/macOS 安装脚本
+│   └── install-deps.bat     # Windows 安装脚本
+├── scripts/                  # TypeScript 源文件
+│   ├── wechat-api.ts        # API 发布逻辑
+│   ├── wechat-article.ts    # 浏览器发布逻辑
+│   ├── wechat-browser.ts    # 图文发布逻辑
+│   ├── generate-cover.ts    # 封面生成逻辑
+│   ├── md-to-wechat.ts      # Markdown 转换逻辑
+│   ├── md/                  # Markdown 渲染引擎
+│   │   ├── render.ts
+│   │   ├── themes/          # 主题样式
+│   │   └── extensions/      # 扩展插件
+│   ├── package.json         # 依赖配置
+│   └── node_modules/        # 依赖包（安装后）
+├── references/              # 参考文档
+├── SKILL.md                 # 技能文档
+└── README.md                # 项目说明
+```
 
-| 脚本 | 用途 |
-|------|------|
-| `scripts/wechat-api.ts` | 文章发布（API 方式，推荐） |
-| `scripts/wechat-article.ts` | 文章发布（浏览器方式） |
-| `scripts/wechat-browser.ts` | 图文发布（图文消息） |
-| `scripts/generate-cover.ts` | 生成封面图（无系统依赖） |
-| `scripts/md-to-wechat.ts` | Markdown 转 HTML |
-| `scripts/md/render.ts` | Markdown 渲染引擎（支持主题） |
-| `scripts/install-deps.sh` | 依赖安装脚本 |
+**Agent 执行**：确定此 SKILL.md 目录为 `SKILL_DIR`，然后根据操作系统选择命令：
+
+### 平台检测（Agent 应自动执行）
+
+```bash
+# 检测操作系统
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OS" == "Windows_NT" ]]; then
+    # Windows 环境
+    SCRIPT_EXT=".bat"
+else
+    # Unix/Linux/macOS 环境
+    SCRIPT_EXT=""
+fi
+```
+
+### 跨平台命令格式
+
+**推荐用法**（Agent 自动适配）：
+
+```bash
+# Unix/Linux/macOS
+${SKILL_DIR}/bin/wechat-api article.md --inline-css
+
+# Windows
+${SKILL_DIR}\bin\wechat-api.bat article.md --inline-css
+```
+
+**通用脚本模板**（Agent 使用）：
+
+```bash
+# Agent 应该使用这种方式来确保跨平台兼容
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OS" == "Windows_NT" ]]; then
+    # Windows
+    ${SKILL_DIR}\bin\wechat-api.bat article.md --inline-css
+else
+    # Unix/Linux/macOS
+    ${SKILL_DIR}/bin/wechat-api article.md --inline-css
+fi
+```
+
+所有可执行脚本在 `bin/` 目录，TypeScript 源文件在 `scripts/` 目录。
 
 ## 依赖安装（首次使用）
 
 本技能需要安装 Node.js 依赖包。首次使用前请执行：
 
+### Unix/Linux/macOS
+
 ```bash
-cd ${SKILL_DIR}/scripts
-./install-deps.sh
+${SKILL_DIR}/bin/install-deps.sh
 ```
 
-或手动安装：
+### Windows
+
+```cmd
+${SKILL_DIR}\bin\install-deps.bat
+```
+
+### 或手动安装（跨平台）
 
 ```bash
 cd ${SKILL_DIR}/scripts
 npm install
-# 或使用 bun（更快）
-bun install
 ```
+
+**运行时支持**：
+- ✅ Bun（推荐，最快）
+- ✅ Node.js + tsx（快速）
+- ✅ Node.js + ts-node（传统）
+
+可执行脚本（`bin/` 目录）会自动检测并使用可用的运行时，无需手动配置。
+
+**跨平台兼容**：
+- Unix/Linux/macOS：使用 `.sh` 脚本（无扩展名的命令）
+- Windows：使用 `.bat` 脚本
+- 都通过 `run.sh` 或 `run.js` 自动检测最佳运行时
 
 ### 依赖说明
 
 **必需依赖**（自动安装）：
 - `markdown-it` - Markdown 渲染引擎
 - `juice` - CSS 内联转换
+- `tsx` - TypeScript 运行器（node 环境下使用）
 
 **可选依赖**（用于封面图生成）：
 - `@napi-rs/canvas` - 高性能图片生成（推荐）
 - `sharp` - 图片处理库
 
-**降级策略**：如果可选依赖未安装，`generate-cover.ts` 会自动生成 SVG 格式的封面图（微信也支持）。
+**降级策略**：如果可选依赖未安装，`generate-cover` 会自动生成 SVG 格式的封面图（微信也支持）。
 
 ## 功能概述
 
@@ -319,7 +401,7 @@ header: "下一步"
 2. **执行转换**：
 
 ```bash
-npx -y bun ${SKILL_DIR}/scripts/md-to-wechat.ts \
+${SKILL_DIR}/bin/md-to-wechat \
   "$output_dir/$slug.md" \
   --theme grace \
   --output "$output_dir"
@@ -368,7 +450,7 @@ header: "封面来源"
 
 ```bash
 # 使用 Node.js 脚本生成（无系统依赖）
-npx -y bun ${SKILL_DIR}/scripts/generate-cover.ts \
+${SKILL_DIR}/bin/generate-cover \
   --title "$title" \
   --output "$output_dir/$slug-cover.jpg" \
   --gradient-start "#667eea" \
@@ -431,7 +513,7 @@ WECHAT_APP_SECRET=<用户输入>
 3. **执行发布**：
 
 ```bash
-npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
+${SKILL_DIR}/bin/wechat-api \
   "$output_dir/$slug.html" \
   --title "$title" \
   --summary "$summary" \
@@ -444,7 +526,7 @@ npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
 #### 选项 B: 浏览器方式发布
 
 ```bash
-npx -y bun ${SKILL_DIR}/scripts/wechat-article.ts \
+${SKILL_DIR}/bin/wechat-article \
   --html "$output_dir/$slug.html" \
   --title "$title" \
   --summary "$summary"
@@ -635,7 +717,7 @@ echo "$html_content" > "$temp_dir/original.html"
 ```bash
 # 使用 wechat-api.ts 的内联转换功能
 # 注意：这里先生成处理后的 HTML，不立即发布
-npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
+${SKILL_DIR}/bin/wechat-api \
   "$temp_dir/original.html" \
   --inline-css \
   --output "$temp_dir/processed.html" \
@@ -694,7 +776,7 @@ header: "发布选项"
 #### 选项 A: 直接发布（API）
 
 ```bash
-npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
+${SKILL_DIR}/bin/wechat-api \
   "$temp_dir/processed.html" \
   --title "$title" \
   --summary "$summary" \
@@ -711,7 +793,7 @@ npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
 #### 选项 B: 浏览器发布
 
 ```bash
-npx -y bun ${SKILL_DIR}/scripts/wechat-article.ts \
+${SKILL_DIR}/bin/wechat-article \
   --html "$temp_dir/processed.html" \
   --title "$title" \
   --summary "$summary"
@@ -772,13 +854,13 @@ echo "✓ 图片已保存至：$(dirname "$output_path")/images/"
 
 ```bash
 # 一键转换并发布
-npx -y bun ${SKILL_DIR}/scripts/md-to-wechat.ts \
+${SKILL_DIR}/bin/md-to-wechat \
   "$markdown_file" \
   --theme grace \
   --output ./output
 
 # 然后使用 API 发布
-npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
+${SKILL_DIR}/bin/wechat-api \
   "$html_output" \
   --inline-css \
   --cover "$cover_image"
@@ -801,7 +883,7 @@ npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
 
 ```bash
 # 直接发布（自动内联 CSS）
-npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
+${SKILL_DIR}/bin/wechat-api \
   "$html_file" \
   --title "文章标题" \
   --summary "摘要" \
@@ -821,12 +903,12 @@ npx -y bun ${SKILL_DIR}/scripts/wechat-api.ts \
 
 ```bash
 # 从 Markdown 文件发布
-npx -y bun ${SKILL_DIR}/scripts/wechat-browser.ts \
+${SKILL_DIR}/bin/wechat-browser \
   --markdown article.md \
   --images ./images/
 
 # 直接指定内容和图片
-npx -y bun ${SKILL_DIR}/scripts/wechat-browser.ts \
+${SKILL_DIR}/bin/wechat-browser \
   --title "标题" \
   --content "内容" \
   --image img1.png \
@@ -1001,7 +1083,7 @@ try {
 脚本：`scripts/generate-cover.ts`
 
 ```bash
-npx -y bun ${SKILL_DIR}/scripts/generate-cover.ts \
+${SKILL_DIR}/bin/generate-cover \
   --title "文章标题" \
   --output cover.jpg \
   --gradient-start "#667eea" \
@@ -1039,9 +1121,9 @@ convert -size 900x500 \
 
 | 问题 | 解决方案 |
 |------|---------|
-| 依赖未安装 | 运行 `cd ${SKILL_DIR}/scripts && ./install-deps.sh` |
+| 依赖未安装 | 运行 `${SKILL_DIR}/bin/install-deps.sh` |
 | Cannot find module 'markdown-it' | 依赖未安装，运行安装脚本 |
-| 封面图生成 SVG 而非 PNG/JPEG | 可选依赖未安装，运行 `npm install @napi-rs/canvas` 或接受 SVG 格式 |
+| 封面图生成 SVG 而非 PNG/JPEG | 可选依赖未安装，运行 `cd ${SKILL_DIR}/scripts && npm install @napi-rs/canvas` 或接受 SVG 格式 |
 | 链接无法访问 | 检查网络连接，尝试使用代理或 VPN |
 | 图片上传失败 (40113) | 自动触发元数据清洗，无需手动处理 |
 | 样式丢失 | 确保使用了 `--inline-css` 参数 |
