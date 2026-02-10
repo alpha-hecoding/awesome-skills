@@ -92,6 +92,70 @@ function parseArgs(argv: string[]): CoverOptions {
   return options;
 }
 
+async function downloadFont(url: string, dest: string): Promise<void> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Failed to download font: ${response.statusText}`);
+  const arrayBuffer = await response.arrayBuffer();
+  fs.writeFileSync(dest, Buffer.from(arrayBuffer));
+}
+
+async function prepareFont(GlobalFonts: any): Promise<string> {
+  const fontName = "SourceHanSansCN-Bold";
+  
+  // Cache directory
+  const homeDir = process.env.HOME || process.env.USERPROFILE || ".";
+  const fontDir = path.join(homeDir, ".awesome-skills", "fonts");
+  const fontPath = path.join(fontDir, "SourceHanSansCN-Bold.otf");
+
+  // Mirror list for China-friendly access
+  const mirrorUrls = [
+    // JsDelivr (Fastly CDN)
+    "https://fastly.jsdelivr.net/gh/adobe-fonts/source-han-sans@release/SubsetOTF/CN/SourceHanSansCN-Bold.otf",
+    // JsDelivr (GCore CDN - often faster in China)
+    "https://gcore.jsdelivr.net/gh/adobe-fonts/source-han-sans@release/SubsetOTF/CN/SourceHanSansCN-Bold.otf",
+    // Original GitHub (Fallback)
+    "https://github.com/adobe-fonts/source-han-sans/raw/release/SubsetOTF/CN/SourceHanSansCN-Bold.otf"
+  ];
+
+  try {
+    if (!fs.existsSync(fontDir)) {
+      fs.mkdirSync(fontDir, { recursive: true });
+    }
+
+    if (!fs.existsSync(fontPath)) {
+      console.error(`[generate-cover] Downloading Chinese font (Source Han Sans)...`);
+      
+      let downloaded = false;
+      for (const url of mirrorUrls) {
+        try {
+          console.error(`[generate-cover] Trying mirror: ${new URL(url).hostname}...`);
+          await downloadFont(url, fontPath);
+          downloaded = true;
+          console.error(`[generate-cover] Font downloaded successfully.`);
+          break;
+        } catch (e) {
+          console.error(`[generate-cover] Mirror failed: ${new URL(url).hostname}`);
+          if (fs.existsSync(fontPath)) fs.unlinkSync(fontPath); // Clean partial download
+        }
+      }
+
+      if (!downloaded) {
+        throw new Error("All font download mirrors failed.");
+      }
+    }
+
+    if (fs.existsSync(fontPath)) {
+      const success = GlobalFonts.registerFromPath(fontPath, fontName);
+      if (success) return fontName;
+    }
+  } catch (error) {
+    console.warn(`[generate-cover] Failed to setup Chinese font: ${error}`);
+    console.warn(`[generate-cover] Tip: You can manually download SourceHanSansCN-Bold.otf to ~/.awesome-skills/fonts/`);
+  }
+  
+  return "";
+}
+
 function wrapText(ctx: any, text: string, maxWidth: number, fontSize: number): string[] {
     const words = text.split(' ');
     const lines = [];
@@ -114,7 +178,16 @@ function wrapText(ctx: any, text: string, maxWidth: number, fontSize: number): s
 async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
   try {
     // Try to import @napi-rs/canvas
-    const { createCanvas } = await import("@napi-rs/canvas");
+    const { createCanvas, GlobalFonts } = await import("@napi-rs/canvas");
+
+    // Prepare Chinese font
+    let customFont = "";
+    try {
+        customFont = await prepareFont(GlobalFonts);
+    } catch (e) {
+        // Ignore font loading errors
+        console.error(`[generate-cover] Font preparation warning: ${e}`);
+    }
 
     // Super-sampling for tech style to ensure crisp text
     const scale = options.style === "tech" ? 2 : 1;
@@ -230,9 +303,11 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
     const fontSize = baseFontSize * scale;
     
     // Use system fonts that are likely to support English well
-    const fontFamily = options.style === "tech" 
+    const baseFontFamily = options.style === "tech" 
         ? `"Segoe UI", Roboto, Helvetica, Arial, sans-serif`
         : `"PingFang SC", "Microsoft YaHei", sans-serif`;
+
+    const fontFamily = customFont ? `"${customFont}", ${baseFontFamily}` : baseFontFamily;
     
     // Wrap title text
     const lines = wrapText(ctx, options.title, width * 0.8, fontSize);

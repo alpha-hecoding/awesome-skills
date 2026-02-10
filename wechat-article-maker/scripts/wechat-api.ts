@@ -164,6 +164,17 @@ async function uploadImageInternal(
     const urlPath = imagePath.split("?")[0];
     filename = path.basename(urlPath) || "image.jpg";
     contentType = response.headers.get("content-type") || "image/jpeg";
+
+    if (!path.extname(filename)) {
+      const extMap: Record<string, string> = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/gif": ".gif",
+        "image/webp": ".webp"
+      };
+      const ext = extMap[contentType] || ".jpg";
+      filename += ext;
+    }
   } else {
     const resolvedPath = path.isAbsolute(imagePath)
       ? imagePath
@@ -268,9 +279,10 @@ async function uploadImagesInHtml(
     const localPathMatch = fullTag.match(/data-local-path=["']([^"']+)["']/);
     const imagePath = localPathMatch ? localPathMatch[1]! : src;
 
-    console.error(`[wechat-api] Uploading image: ${imagePath}`);
+    console.error(`[wechat-api] Found image tag: ${fullTag.substring(0, 50)}... -> ${imagePath}`);
     try {
       const resp = await uploadImage(imagePath, accessToken, baseDir);
+      console.error(`[wechat-api] Uploaded successfully: ${resp.url}`);
       const newTag = fullTag
         .replace(/\ssrc=["'][^"']+["']/, ` src="${resp.url}"`)
         .replace(/\sdata-local-path=["'][^"']+["']/, "");
