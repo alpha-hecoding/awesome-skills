@@ -6,158 +6,51 @@
 
 | 功能 | Windows | macOS | Linux |
 |------|---------|-------|-------|
-| 依赖安装 | ✅ | ✅ | ✅ |
+| 依赖自动安装 | ✅ | ✅ | ✅ |
 | API 发布 | ✅ | ✅ | ✅ |
 | 浏览器发布 | ✅ | ✅ | ✅ |
 | 图文发布 | ✅ | ✅ | ✅ |
 | 封面生成 | ✅ | ✅ | ✅ |
 | Markdown 转换 | ✅ | ✅ | ✅ |
 
-## 命令对照表
+## 统一的运行方式
 
-### 依赖安装
-
-| 平台 | 命令 |
-|------|------|
-| Unix/Linux/macOS | `${SKILL_DIR}/bin/install-deps.sh` |
-| Windows | `${SKILL_DIR}\bin\install-deps.bat` |
-
-### API 发布
-
-| 平台 | 命令 |
-|------|------|
-| Unix/Linux/macOS | `${SKILL_DIR}/bin/wechat-api article.md --inline-css` |
-| Windows | `${SKILL_DIR}\bin\wechat-api.bat article.md --inline-css` |
-
-### 浏览器发布
-
-| 平台 | 命令 |
-|------|------|
-| Unix/Linux/macOS | `${SKILL_DIR}/bin/wechat-article --html article.html` |
-| Windows | `${SKILL_DIR}\bin\wechat-article.bat --html article.html` |
-
-### 封面生成
-
-| 平台 | 命令 |
-|------|------|
-| Unix/Linux/macOS | `${SKILL_DIR}/bin/generate-cover --title "标题" --output cover.jpg` |
-| Windows | `${SKILL_DIR}\bin\generate-cover.bat --title "标题" --output cover.jpg` |
-
-### Markdown 转换
-
-| 平台 | 命令 |
-|------|------|
-| Unix/Linux/macOS | `${SKILL_DIR}/bin/md-to-wechat article.md --theme grace` |
-| Windows | `${SKILL_DIR}\bin\md-to-wechat.bat article.md --theme grace` |
-
-## AI Agent 平台检测
-
-AI Agent 应该使用以下逻辑自动检测平台并选择正确的命令：
-
-### Bash 脚本检测
+所有平台使用相同的命令格式：
 
 ```bash
-#!/bin/bash
-# 检测操作系统并设置脚本扩展名
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OS" == "Windows_NT" ]]; then
-    # Windows 环境
-    SCRIPT_EXT=".bat"
-    PATH_SEP="\\"
-else
-    # Unix/Linux/macOS 环境
-    SCRIPT_EXT=""
-    PATH_SEP="/"
-fi
-
-# 使用检测到的扩展名
-"${SKILL_DIR}${PATH_SEP}bin${PATH_SEP}wechat-api${SCRIPT_EXT}" article.md --inline-css
+npx -y bun "${SKILL_DIR}/scripts/<script>.ts" [options]
 ```
 
-### Python 脚本检测
+### 命令示例
 
-```python
-import os
-import platform
-import subprocess
+| 功能 | 命令 |
+|------|------|
+| API 发布 | `npx -y bun "${SKILL_DIR}/scripts/wechat-api.ts" article.md --inline-css` |
+| 浏览器发布 | `npx -y bun "${SKILL_DIR}/scripts/wechat-article.ts" --html article.html` |
+| 封面生成 | `npx -y bun "${SKILL_DIR}/scripts/generate-cover.ts" --title "标题" --output cover.jpg` |
+| Markdown 转换 | `npx -y bun "${SKILL_DIR}/scripts/md-to-wechat.ts" article.md --theme grace` |
+| 图文发布 | `npx -y bun "${SKILL_DIR}/scripts/wechat-browser.ts" --markdown article.md --images ./images/` |
 
-# 检测操作系统
-is_windows = platform.system() == 'Windows' or os.name == 'nt'
+**注意**：`npx -y bun` 会自动下载并使用 Bun 运行时，无需手动安装。
 
-# 设置命令
-skill_dir = '/path/to/wechat-article-maker'
-if is_windows:
-    script_ext = '.bat'
-    path_sep = '\\'
-else:
-    script_ext = ''
-    path_sep = '/'
+## 依赖管理
 
-# 构建命令
-cmd = f'{skill_dir}{path_sep}bin{path_sep}wechat-api{script_ext}'
+依赖会在脚本首次运行时自动安装：
 
-# 执行
-subprocess.run([cmd, 'article.md', '--inline-css'])
-```
+1. 脚本检测所需依赖
+2. 如果缺失，自动运行 `npm install --no-save <package>`
+3. 安装完成后继续执行脚本
 
-### Node.js 脚本检测
+**必需依赖**（自动安装）：
+- `front-matter` - Frontmatter 解析
+- `highlight.js` - 代码高亮
+- `marked` - Markdown 渲染引擎
+- `reading-time` - 阅读时间计算
+- `juice` - CSS 内联转换
 
-```javascript
-const os = require('os');
-const { spawn } = require('child_process');
-const path = require('path');
-
-// 检测操作系统
-const isWindows = os.platform() === 'win32';
-
-// 设置命令
-const skillDir = '/path/to/wechat-article-maker';
-const scriptExt = isWindows ? '.bat' : '';
-const cmd = path.join(skillDir, 'bin', `wechat-api${scriptExt}`);
-
-// 执行
-const child = spawn(cmd, ['article.md', '--inline-css'], {
-  stdio: 'inherit'
-});
-```
-
-## 运行时检测
-
-无论在哪个平台，脚本都会自动检测并使用最佳运行时：
-
-### Unix/Linux/macOS
-
-使用 `bin/run.sh`（Shell 脚本）：
-
-```
-1. 检查 bun       → 最快
-2. 检查 tsx       → 快速
-3. 检查 ts-node   → 传统
-4. 检查本地 tsx   → 备用
-```
-
-### Windows
-
-使用 `bin/run.js`（Node.js 脚本）：
-
-```
-1. 检查 bun       → 最快
-2. 检查 tsx       → 快速
-3. 检查 ts-node   → 传统
-4. 检查本地 tsx   → 备用（.cmd 文件）
-```
-
-## 路径分隔符
-
-不同平台使用不同的路径分隔符：
-
-| 平台 | 路径分隔符 | 示例 |
-|------|-----------|------|
-| Unix/Linux/macOS | `/` | `/home/user/project/bin/wechat-api` |
-| Windows | `\` | `C:\Users\user\project\bin\wechat-api.bat` |
-
-**注意**：在命令行中使用时：
-- Unix/Linux/macOS 使用单斜杠 `/`
-- Windows 可以使用反斜杠 `\` 或正斜杠 `/`
+**可选依赖**（用于封面图生成）：
+- `@napi-rs/canvas` - 高性能图片生成
+- `sharp` - 图片处理库
 
 ## 环境变量
 
@@ -195,24 +88,6 @@ $env:WECHAT_APP_SECRET="abc123"
 
 ## 常见问题
 
-### Windows: "不是内部或外部命令"
-
-**问题**：执行 `.bat` 文件时报错
-
-**解决**：
-1. 确保使用完整路径或 `cd` 到 `bin/` 目录
-2. 使用 `call` 命令：`call bin\wechat-api.bat`
-3. 或在 PowerShell 中使用 `.\bin\wechat-api.bat`
-
-### Unix/Linux/macOS: "Permission denied"
-
-**问题**：脚本没有执行权限
-
-**解决**：
-```bash
-chmod +x bin/*
-```
-
 ### 路径包含空格
 
 **问题**：路径中包含空格导致错误
@@ -220,37 +95,28 @@ chmod +x bin/*
 **解决**：使用引号包裹路径
 
 ```bash
-# Unix/Linux/macOS
-"/path/with spaces/bin/wechat-api" article.md
-
-# Windows
-"C:\path\with spaces\bin\wechat-api.bat" article.md
+npx -y bun "/path/with spaces/scripts/wechat-api.ts" article.md
 ```
 
-## 测试跨平台兼容性
+### 首次运行较慢
 
-验证在不同平台上的安装：
+**问题**：首次运行时需要下载 Bun 和安装依赖
 
-### Unix/Linux/macOS
+**解决**：这是正常现象，等待完成即可。后续运行会更快。
 
-```bash
-cd /path/to/wechat-article-maker
-bin/install-deps.sh
-bin/wechat-api --help
-```
+### 依赖安装失败
 
-### Windows
+**问题**：网络问题导致 npm install 失败
 
-```cmd
-cd C:\path\to\wechat-article-maker
-bin\install-deps.bat
-bin\wechat-api.bat --help
-```
+**解决**：
+1. 检查网络连接
+2. 配置 npm 镜像：`npm config set registry https://registry.npmmirror.com`
+3. 重试命令
 
 ## 总结
 
 - ✅ **完全跨平台** - Windows、macOS、Linux 都支持
-- ✅ **自动检测** - 运行时和平台自动适配
-- ✅ **双脚本方案** - `.sh` 用于 Unix，`.bat` 用于 Windows
-- ✅ **统一接口** - 所有平台使用相同的参数和选项
-- ✅ **AI 友好** - 提供平台检测逻辑供 AI Agent 使用
+- ✅ **统一命令** - 所有平台使用相同的 `npx -y bun` 命令
+- ✅ **自动依赖** - 依赖在首次运行时自动安装
+- ✅ **零配置** - 无需手动安装 Bun 或依赖
+- ✅ **AI 友好** - 简单的命令格式，易于 AI Agent 使用

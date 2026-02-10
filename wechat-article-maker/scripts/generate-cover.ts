@@ -1,8 +1,7 @@
 #!/usr/bin/env bun
-/**
- * Generate cover image for WeChat articles using Node.js canvas
- * Fallback solution when ImageMagick is not available
- */
+
+import { autoInstall } from "./ensure-deps.js";
+autoInstall();
 
 import fs from "node:fs";
 import path from "node:path";

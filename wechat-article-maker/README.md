@@ -9,7 +9,8 @@
 ## 🌟 特性
 
 - ✅ **完全跨平台** - Windows、macOS、Linux 原生支持
-- ✅ **智能运行时检测** - 自动选择最佳运行时（bun/tsx/ts-node/node）
+- ✅ **零配置运行** - 使用 `npx -y bun` 自动下载运行时
+- ✅ **依赖自动安装** - 首次运行时自动安装所需依赖
 - ✅ **内容创作** - AI 辅助生成文章
 - ✅ **链接发布** - 下载并转换外部文章
 - ✅ **Markdown 转换** - 支持多主题（default/grace/simple）
@@ -20,30 +21,9 @@
 
 ## 🚀 快速开始
 
-### 安装依赖
+### 配置 API 凭证（可选）
 
-<details>
-<summary><b>Unix/Linux/macOS</b></summary>
-
-```bash
-cd /path/to/wechat-article-maker
-bin/install-deps.sh
-```
-</details>
-
-<details>
-<summary><b>Windows</b></summary>
-
-```cmd
-cd C:\path\to\wechat-article-maker
-bin\install-deps.bat
-```
-</details>
-
-### 配置 API 凭证
-
-<details>
-<summary><b>方法 1: 配置文件（推荐）</b></summary>
+如果计划使用 API 方式发布，需要配置微信 API 凭证：
 
 **Unix/Linux/macOS**:
 ```bash
@@ -60,77 +40,55 @@ mkdir .awesome-skills
 echo WECHAT_APP_ID=your_app_id > .awesome-skills\.env
 echo WECHAT_APP_SECRET=your_app_secret >> .awesome-skills\.env
 ```
-</details>
 
-<details>
-<summary><b>方法 2: 命令行参数（最灵活）</b></summary>
-
-直接在命令中传递凭证，无需配置文件：
-
+**或在命令行直接传递**（最灵活）：
 ```bash
-# Unix/Linux/macOS
-bin/wechat-api article.md --app-id wx123456 --app-secret abc123 --inline-css
-
-# Windows
-bin\wechat-api.bat article.md --app-id wx123456 --app-secret abc123 --inline-css
+npx -y bun scripts/wechat-api.ts article.md --app-id wx123456 --app-secret abc123 --inline-css
 ```
-</details>
 
 ### 开始使用
 
-<details>
-<summary><b>Unix/Linux/macOS</b></summary>
-
 ```bash
-# 发布 Markdown 文章
-bin/wechat-api article.md --inline-css
+# 1. 进入项目目录
+cd /path/to/wechat-article-maker
 
-# 生成封面图
-bin/generate-cover --title "文章标题" --output cover.jpg
+# 2. 发布 Markdown 文章（自动安装依赖）
+npx -y bun scripts/wechat-api.ts article.md --inline-css
 
-# Markdown 转 HTML
-bin/md-to-wechat article.md --theme grace
+# 3. 生成封面图
+npx -y bun scripts/generate-cover.ts --title "文章标题" --output cover.jpg
+
+# 4. Markdown 转 HTML
+npx -y bun scripts/md-to-wechat.ts article.md --theme grace
 ```
-</details>
 
-<details>
-<summary><b>Windows</b></summary>
-
-```cmd
-REM 发布 Markdown 文章
-bin\wechat-api.bat article.md --inline-css
-
-REM 生成封面图
-bin\generate-cover.bat --title "文章标题" --output cover.jpg
-
-REM Markdown 转 HTML
-bin\md-to-wechat.bat article.md --theme grace
-```
-</details>
+**注意**：首次运行时会自动下载 Bun 和安装依赖，请耐心等待。
 
 ## 📁 目录结构
 
 ```
 wechat-article-maker/
-├── bin/                      # 可执行脚本（跨平台）
-│   ├── wechat-api (.bat)    # API 发布
-│   ├── wechat-article (.bat) # 浏览器发布
-│   ├── generate-cover (.bat) # 封面生成
-│   ├── md-to-wechat (.bat)   # Markdown 转换
-│   └── install-deps (.sh/.bat) # 依赖安装
 ├── scripts/                  # TypeScript 源代码
-│   ├── md/themes/           # 主题样式（3种）
-│   ├── package.json         # 依赖配置
-│   └── *.ts                 # 业务逻辑
-└── references/              # 参考文档
+│   ├── wechat-api.ts        # API 发布
+│   ├── wechat-article.ts    # 浏览器发布
+│   ├── wechat-browser.ts    # 图文发布
+│   ├── generate-cover.ts    # 封面生成
+│   ├── md-to-wechat.ts      # Markdown 转换
+│   ├── ensure-deps.ts       # 依赖自动安装
+│   ├── md/                  # Markdown 渲染引擎
+│   │   ├── themes/          # 主题样式（3种）
+│   │   └── extensions/      # 扩展插件
+│   └── node_modules/        # 自动安装的依赖
+├── references/              # 参考文档
+├── SKILL.md                 # 完整技能文档
+├── CROSS_PLATFORM.md        # 跨平台使用说明
+└── README.md                # 项目说明
 ```
 
 ## 📖 文档
 
 - [SKILL.md](SKILL.md) - 完整技能文档（包含所有工作流程）
-- [USAGE.md](USAGE.md) - 详细使用指南（带跨平台示例）
 - [CROSS_PLATFORM.md](CROSS_PLATFORM.md) - 跨平台详细说明
-- [STRUCTURE.md](STRUCTURE.md) - 目录结构说明
 
 ## 🎨 主题样式
 
@@ -146,64 +104,39 @@ wechat-article-maker/
 
 ### 发布文章（带自定义封面）
 
-<details>
-<summary><b>Unix/Linux/macOS</b></summary>
-
 ```bash
 # 1. 生成封面
-bin/generate-cover --title "AI 编程助手的未来" --output cover.jpg
+npx -y bun scripts/generate-cover.ts --title "AI 编程助手的未来" --output cover.jpg
 
 # 2. 发布文章
-bin/wechat-api article.md \
+npx -y bun scripts/wechat-api.ts article.md \
   --cover cover.jpg \
   --title "AI 编程助手的未来" \
   --summary "探讨 AI 如何改变编程方式" \
   --inline-css
 ```
-</details>
-
-<details>
-<summary><b>Windows</b></summary>
-
-```cmd
-REM 1. 生成封面
-bin\generate-cover.bat --title "AI 编程助手的未来" --output cover.jpg
-
-REM 2. 发布文章
-bin\wechat-api.bat article.md --cover cover.jpg --title "AI 编程助手的未来" --summary "探讨 AI 如何改变编程方式" --inline-css
-```
-</details>
 
 ### 使用不同主题
 
 ```bash
-# Unix/Linux/macOS
-bin/md-to-wechat article.md --theme default  # 经典主题
-bin/md-to-wechat article.md --theme grace    # 优雅主题（推荐）
-bin/md-to-wechat article.md --theme simple   # 简洁主题
-
-# Windows
-bin\md-to-wechat.bat article.md --theme default
-bin\md-to-wechat.bat article.md --theme grace
-bin\md-to-wechat.bat article.md --theme simple
+npx -y bun scripts/md-to-wechat.ts article.md --theme default  # 经典主题
+npx -y bun scripts/md-to-wechat.ts article.md --theme grace    # 优雅主题（推荐）
+npx -y bun scripts/md-to-wechat.ts article.md --theme simple   # 简洁主题
 ```
 
-## 🔧 运行时支持
+## 🔧 运行方式
 
-脚本会自动检测并使用最佳运行时：
+所有脚本通过 `npx -y bun` 运行：
 
-1. **Bun** ⚡ - 最快（推荐）
-2. **tsx** 🚀 - 快速 TypeScript 运行器
-3. **ts-node** 📦 - 传统方案
-4. **node + 本地 tsx** 🔄 - 从 node_modules 加载
-
-无需手动配置，开箱即用！
+- **自动下载 Bun** - 如果未安装，npx 会自动下载
+- **自动安装依赖** - 脚本首次运行时自动安装所需 npm 包
+- **跨平台统一** - Windows、macOS、Linux 使用相同命令
 
 ## 🌍 平台兼容性
 
 | 功能 | Windows | macOS | Linux |
 |------|---------|-------|-------|
-| 依赖安装 | ✅ | ✅ | ✅ |
+| 依赖自动安装 | ✅ | ✅ | ✅ |
 | API 发布 | ✅ | ✅ | ✅ |
 | 浏览器发布 | ✅ | ✅ | ✅ |
 | 图文发布 | ✅ | ✅ | ✅ |
@@ -213,9 +146,11 @@ bin\md-to-wechat.bat article.md --theme simple
 ## ⚙️ 依赖说明
 
 **必需依赖**（自动安装）：
-- `markdown-it` - Markdown 渲染引擎
+- `front-matter` - Frontmatter 解析
+- `highlight.js` - 代码高亮
+- `marked` - Markdown 渲染引擎
+- `reading-time` - 阅读时间计算
 - `juice` - CSS 内联转换
-- `tsx` - TypeScript 运行器
 
 **可选依赖**（封面图生成）：
 - `@napi-rs/canvas` - 高性能图片生成（推荐）
@@ -225,25 +160,24 @@ bin\md-to-wechat.bat article.md --theme simple
 
 ## 🐛 故障排查
 
-### 依赖未安装
+### 首次运行较慢
 
-```bash
-# Unix/Linux/macOS
-bin/install-deps.sh
+**问题**：首次运行时需要下载 Bun 和安装依赖
 
-# Windows
-bin\install-deps.bat
-```
+**解决**：这是正常现象，等待完成即可。后续运行会更快。
 
-### 运行时未找到
+### 依赖安装失败
 
-安装 Node.js（>= 18.0.0）或 Bun：
-- Node.js: https://nodejs.org
-- Bun: https://bun.sh
+**问题**：网络问题导致 npm install 失败
+
+**解决**：
+1. 检查网络连接
+2. 配置 npm 镜像：`npm config set registry https://registry.npmmirror.com`
+3. 重试命令
 
 ### 更多问题
 
-参见 [USAGE.md](USAGE.md) 的故障排查部分。
+参见 [SKILL.md](SKILL.md) 的故障排查部分。
 
 ## 📝 许可证
 

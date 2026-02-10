@@ -1,5 +1,8 @@
 #!/usr/bin/env npx tsx
 
+import { autoInstall } from "../ensure-deps.js";
+autoInstall();
+
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
