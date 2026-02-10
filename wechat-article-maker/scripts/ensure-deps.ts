@@ -17,7 +17,7 @@ const DEPENDENCY_MAP: Record<string, string[]> = {
     "juice",
   ],
   "generate-cover.ts": ["@napi-rs/canvas", "sharp"],
-  "wechat-api.ts": [], // Uses only Node.js built-in APIs
+  "wechat-api.ts": ["sharp"],
   "wechat-article.ts": [], // Uses only Node.js built-in APIs
   "wechat-browser.ts": [], // Uses only Node.js built-in APIs
   "wechat-agent-browser.ts": [], // Uses only Node.js built-in APIs

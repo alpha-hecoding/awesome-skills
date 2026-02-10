@@ -1,6 +1,6 @@
 ---
 name: wechat-article-maker
-description: 智能创作并发布微信公众号文章。支持内容理解、链接分析、Markdown转换、图片清洗、样式处理和一键发布。当用户提到"创作公众号文章"、"发布文章链接"、"生成微信文章"、"推送到微信公众号"时使用。
+description: 智能创作并发布微信公众号文章。支持内容理解、链接分析、Markdown转换、图片清洗、样式处理和一键发布。当用户提到"创作公众号文章"、"发布文章链接"、"生成微信文章"、"推送到微信公众号"、"发布文章到微信公众号"时使用。
 ---
 
 # 微信公众号文章创作与发布
@@ -17,14 +17,14 @@ wechat-article-maker/
 │   ├── wechat-api.ts        # API 发布逻辑
 │   ├── wechat-article.ts    # 浏览器发布逻辑
 │   ├── wechat-browser.ts    # 图文发布逻辑
+│   ├── image-utils.ts       # 图片处理工具（sharp 集成）
 │   ├── generate-cover.ts    # 封面生成逻辑
 │   ├── md-to-wechat.ts      # Markdown 转换逻辑
 │   ├── ensure-deps.ts       # 依赖自动安装
-│   ├── md/                  # Markdown 渲染引擎
-│   │   ├── render.ts
-│   │   ├── themes/          # 主题样式
-│   │   └── extensions/      # 扩展插件
-│   └── node_modules/        # 自动安装的依赖包
+│   └── md/                  # Markdown 渲染引擎
+│       ├── render.ts
+│       ├── themes/          # 主题样式
+│       └── extensions/      # 扩展插件
 ├── references/              # 参考文档
 ├── SKILL.md                 # 技能文档
 └── README.md                # 项目说明
@@ -60,9 +60,11 @@ npx -y bun "${SKILL_DIR}/scripts/generate-cover.ts" --title "标题" --output co
 - `reading-time` - 阅读时间计算
 - `juice` - CSS 内联转换
 - `@napi-rs/canvas` - 高性能图片生成（可选，用于封面）
-- `sharp` - 图片处理库（可选，用于封面）
+- `sharp` - 图片处理库（内置，用于图片清理和封面生成）
 
-**降级策略**：如果可选依赖未安装，`generate-cover` 会自动生成 SVG 格式的封面图（微信也支持）。
+**依赖说明**：
+- sharp 已内置在 `scripts/package.json` 中，首次运行时会自动安装
+- 如果可选依赖未安装，`generate-cover` 会自动生成 SVG 格式的封面图（微信也支持）
 
 ## 功能概述
 
@@ -431,8 +433,8 @@ npx -y bun "${SKILL_DIR}/scripts/md-to-wechat.ts" \
 
 header: "封面来源"
 选项：
-- 自动生成 - 基于文章标题生成渐变背景封面（推荐）
 - 使用首图 - 使用文章中第一张图片
+- 自动生成 - 基于文章标题生成渐变背景封面（推荐）
 - 提供路径 - 指定本地文件或 URL
 - 暂不设置 - 稍后手动添加
 ```
@@ -1024,25 +1026,37 @@ WECHAT_BROWSER_CHROME_PATH=/path/to/chrome  # 自定义 Chrome 路径
 
 ### 图片处理算法
 
-**元数据清洗**（`scripts/wechat-api.ts:105-180`）：
+**元数据清洗**（`scripts/image-utils.ts`）：
 
-1. 检查 JPEG 文件签名（0xFFD8）
-2. 扫描前 2KB，检测 AIGC/Coze 标记
-3. 如果检测到非标准元数据：
-   - 跳过非标准 APP 段（0xEB-0xEF）
-   - 保留标准段（APP0-APP9, DQT, SOF, DHT 等）
-4. 重构 JPEG 文件，只包含标准段
+内置 sharp 库提供可靠的图片处理能力：
+
+1. **智能检测**：扫描图片前 2KB，检测 AIGC/Coze/Adobe 等非标准元数据标记
+2. **深度清理**：使用 sharp 重新编码 JPEG，彻底移除所有元数据
+3. **自动降级**：sharp 不可用时，使用手动解析作为后备方案
+4. **尺寸优化**：自动调整超大图片（限制 1920x1080）以符合微信规范
+
+```typescript
+// 图片处理流程
+const result = await cleanImage(buffer, forceClean);
+// 返回: { buffer, wasCleaned, method: "sharp"|"manual"|"none", originalSize, cleanedSize }
+```
+
+**双引擎清理策略**：
+
+| 方法 | 优先级 | 说明 |
+|------|--------|------|
+| **Sharp 重新编码** | 首选 | 完全重新编码图片，100% 移除元数据 |
+| **手动解析** | 后备 | 解析 JPEG 段结构，跳过非标准标记 |
 
 **自动重试逻辑**：
 
 ```typescript
 try {
-  // 尝试上传原始图片
   await uploadImage(imageBuffer);
 } catch (error) {
-  if (error.code === 40113) {  // 不支持的文件类型
-    // 强制清洗并重试
-    const cleanedBuffer = cleanImageMetadata(imageBuffer);
+  if (error.code === 40113) {
+    // 强制使用 sharp 深度清理后重试
+    const cleanedBuffer = await cleanImage(imageBuffer, true);
     await uploadImage(cleanedBuffer);
   }
 }
@@ -1116,7 +1130,7 @@ convert -size 900x500 \
 | Cannot find module | 尝试重新运行命令，会自动安装缺失依赖 |
 | 封面图生成 SVG 而非 PNG/JPEG | 可选依赖未安装，运行 `cd ${SKILL_DIR}/scripts && npm install @napi-rs/canvas` 或接受 SVG 格式 |
 | 链接无法访问 | 检查网络连接，尝试使用代理或 VPN |
-| 图片上传失败 (40113) | 自动触发元数据清洗，无需手动处理 |
+| 图片上传失败 (40113) | sharp 自动深度清理元数据后重试，无需手动处理 |
 | 样式丢失 | 确保使用了 `--inline-css` 参数 |
 | API 错误 40001 | access_token 无效或过期，检查 API 凭证 |
 | API 错误 40164 (invalid ip) | 在微信公众号后台添加服务器 IP 到白名单：<br/>mp.weixin.qq.com → 开发 → 基本配置 → IP白名单 |

@@ -1,8 +1,12 @@
+import { autoInstall } from "./ensure-deps.js";
+autoInstall();
+
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { cleanImage, hasProblematicMetadata, resizeForWeChat } from "./image-utils.js";
 
 interface WechatConfig {
   appId: string;
@@ -106,60 +110,14 @@ async function fetchAccessToken(appId: string, appSecret: string): Promise<strin
   return data.access_token;
 }
 
-function cleanImageMetadata(buffer: Buffer): Buffer {
-  // Check if the buffer starts with JPEG signature
-  if (buffer.length < 2 || buffer[0] !== 0xff || buffer[1] !== 0xd8) {
-    return buffer;
+async function cleanImageMetadata(buffer: Buffer, forceClean: boolean = false): Promise<Buffer> {
+  const result = await cleanImage(buffer, forceClean);
+  
+  if (result.wasCleaned) {
+    console.error(`[wechat-api] Cleaned image using ${result.method}: ${result.originalSize} -> ${result.cleanedSize} bytes`);
   }
   
-  // Check for AIGC or other non-standard metadata in the first 2KB
-  const headerStr = buffer.slice(0, Math.min(2048, buffer.length)).toString('binary');
-  const hasAigcMarker = headerStr.includes('AIGC{') || headerStr.includes('Coze');
-  
-  if (!hasAigcMarker) {
-    return buffer; // No cleaning needed
-  }
-  
-  console.error(`[wechat-api] Detected non-standard metadata, cleaning...`);
-  
-  // Find the first valid JPEG segment marker after SOI (ffd8)
-  let pos = 2;
-  while (pos < buffer.length - 1) {
-    if (buffer[pos] === 0xff) {
-      const marker = buffer[pos + 1];
-      
-      // Skip padding bytes (0x00)
-      if (marker === 0x00) {
-        pos += 2;
-        continue;
-      }
-      
-      // Skip non-standard markers like APP11 (0xeb) which contains AIGC data
-      if (marker === 0xeb || marker === 0xec || marker === 0xed || marker === 0xee || marker === 0xef) {
-        // Read segment length (big-endian)
-        if (pos + 3 < buffer.length) {
-          const length = (buffer[pos + 2] << 8) | buffer[pos + 3];
-          pos += 2 + length;
-          continue;
-        }
-      }
-      
-      // Valid JPEG markers that indicate start of image data
-      // APP0 (0xe0), APP1 (0xe1, EXIF), APP2 (0xe2), DQT (0xdb), SOF0 (0xc0), SOF2 (0xc2)
-      if (marker >= 0xe0 && marker <= 0xe9) {
-        break;
-      }
-      if (marker === 0xdb || marker === 0xc0 || marker === 0xc2 || marker === 0xc4) {
-        break;
-      }
-    }
-    pos++;
-  }
-  
-  // Return cleaned buffer: SOI (ffd8) + from first valid marker
-  const cleaned = Buffer.concat([buffer.slice(0, 2), buffer.slice(pos)]);
-  console.error(`[wechat-api] Cleaned ${buffer.length} -> ${cleaned.length} bytes`);
-  return cleaned;
+  return result.buffer;
 }
 
 async function uploadImageWithRetry(
@@ -231,10 +189,11 @@ async function uploadImageInternal(
     contentType = mimeTypes[ext] || "image/jpeg";
   }
 
-  // Clean metadata for JPEG images (always clean if forceClean is true)
   if (forceClean || contentType === "image/jpeg" || filename.toLowerCase().match(/\.(jpg|jpeg)$/)) {
-    fileBuffer = cleanImageMetadata(fileBuffer);
+    fileBuffer = await cleanImageMetadata(fileBuffer, forceClean);
   }
+
+  fileBuffer = await resizeForWeChat(fileBuffer);
 
   const boundary = `----WebKitFormBoundary${Date.now().toString(16)}`;
   const header = [
