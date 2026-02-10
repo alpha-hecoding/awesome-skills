@@ -281,6 +281,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  if (fs.statSync(markdownPath).isDirectory()) {
+    console.error(`Error: Input path is a directory, expected a markdown file: ${markdownPath}`);
+    process.exit(1);
+  }
+
   const result = await convertMarkdown(markdownPath, { title, theme });
   console.log(JSON.stringify(result, null, 2));
 }
