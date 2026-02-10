@@ -228,6 +228,7 @@ Usage:
 Options:
   --title <title>     Override title
   --theme <name>      Theme name (default, grace, simple)
+  --output <dir>      Output directory for HTML file
   --help              Show this help
 
 Output JSON format:
@@ -259,6 +260,7 @@ async function main(): Promise<void> {
   let markdownPath: string | undefined;
   let title: string | undefined;
   let theme: string | undefined;
+  let outputDir: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!;
@@ -266,6 +268,8 @@ async function main(): Promise<void> {
       title = args[++i];
     } else if (arg === '--theme' && args[i + 1]) {
       theme = args[++i];
+    } else if (arg === '--output' && args[i + 1]) {
+      outputDir = args[++i];
     } else if (!arg.startsWith('-')) {
       markdownPath = arg;
     }
@@ -287,6 +291,17 @@ async function main(): Promise<void> {
   }
 
   const result = await convertMarkdown(markdownPath, { title, theme });
+
+  if (outputDir) {
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+    const destFileName = path.basename(markdownPath, path.extname(markdownPath)) + '.html';
+    const destHtmlPath = path.join(outputDir, destFileName);
+    fs.copyFileSync(result.htmlPath, destHtmlPath);
+    result.htmlPath = destHtmlPath;
+  }
+
   console.log(JSON.stringify(result, null, 2));
 }
 
