@@ -63,7 +63,7 @@ npx -y bun "${SKILL_DIR}/scripts/generate-cover.ts" --title "标题" --output co
 - `sharp` - 图片处理库（内置，用于图片清理和封面生成）
 
 **依赖说明**：
-- sharp 已内置在 `scripts/package.json` 中，首次运行时会自动安装
+- `sharp` 会在首次运行时通过 `scripts/ensure-deps.ts` 自动安装
 - 如果可选依赖未安装，`generate-cover` 会自动生成 SVG 格式的封面图（微信也支持）
 
 ## 功能概述
@@ -1367,10 +1367,13 @@ Agent：
 
 ### 自动安装的依赖
 
-运行 `./install-deps.sh` 会自动安装：
+脚本会在首次运行时通过 `scripts/ensure-deps.ts` 自动安装以下依赖：
 
 **必需包**：
-- `markdown-it` - Markdown 渲染引擎
+- `front-matter` - Frontmatter 解析
+- `highlight.js` - 代码高亮
+- `marked` - Markdown 渲染引擎
+- `reading-time` - 阅读时间计算
 - `juice` - CSS 内联转换库
 
 **可选包**（封面图生成）：
@@ -1393,7 +1396,7 @@ Agent：
 
 本技能整合了以下功能和技术：
 
-- **Markdown 渲染**：基于 markdown-it 及扩展插件
+- **Markdown 渲染**：基于 marked 及扩展插件
 - **样式主题**：参考微信公众号优秀排版实践
 - **图片处理**：JPEG 元数据清洗算法
 - **微信 API**：官方文档和最佳实践
