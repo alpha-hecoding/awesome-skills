@@ -246,15 +246,15 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
 
     // Background
     if (options.style === "tech") {
-       // Deep Tech Background (Darker, more premium)
+       // Bright Tech Background
        const gradient = ctx.createLinearGradient(0, 0, width, height);
-       gradient.addColorStop(0, "#0B0E14"); // Almost black/dark blue
-       gradient.addColorStop(1, "#1B2735"); // Deep metallic blue
+       gradient.addColorStop(0, "#F8FAFC"); // Very light slate
+       gradient.addColorStop(1, "#F1F5F9"); // Light slate
        ctx.fillStyle = gradient;
        ctx.fillRect(0, 0, width, height);
 
-       // Hex Grid or Square Grid (Subtle)
-       ctx.strokeStyle = "rgba(0, 240, 255, 0.03)"; // Cyan, very faint
+       // Grid (Subtle blue)
+       ctx.strokeStyle = "rgba(14, 165, 233, 0.08)"; 
        ctx.lineWidth = 1 * scale;
        const step = 40 * scale;
        
@@ -275,7 +275,7 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
 
        // Tech Accents: Random glowing data lines
        const lineCount = 5;
-       ctx.strokeStyle = "rgba(0, 240, 255, 0.1)";
+       ctx.strokeStyle = "rgba(14, 165, 233, 0.15)";
        ctx.lineWidth = 2 * scale;
        for(let i=0; i<lineCount; i++) {
            const y = Math.random() * height;
@@ -285,7 +285,7 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
            ctx.stroke();
            
            // Add a "node" on the line
-           ctx.fillStyle = "rgba(0, 240, 255, 0.4)";
+           ctx.fillStyle = "rgba(14, 165, 233, 0.3)";
            ctx.beginPath();
            ctx.arc(Math.random() * width, y, 3 * scale, 0, Math.PI * 2);
            ctx.fill();
@@ -302,8 +302,8 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
            });
        }
 
-       ctx.fillStyle = "rgba(0, 240, 255, 0.4)"; // Cyan particles
-       ctx.strokeStyle = "rgba(0, 240, 255, 0.15)"; // Cyan connections
+       ctx.fillStyle = "rgba(14, 165, 233, 0.3)"; // Sky blue particles
+       ctx.strokeStyle = "rgba(14, 165, 233, 0.1)"; // Sky blue connections
        
        particles.forEach((p, i) => {
            ctx.beginPath();
@@ -325,10 +325,10 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
            });
        });
 
-       // Vignette (Dark corners)
+       // Vignette (Soft bright corners)
         const radial = ctx.createRadialGradient(width/2, height/2, width/3, width/2, height/2, width);
-        radial.addColorStop(0, "rgba(0,0,0,0)");
-        radial.addColorStop(1, "rgba(0,0,0,0.7)");
+        radial.addColorStop(0, "rgba(255,255,255,0)");
+        radial.addColorStop(1, "rgba(186, 230, 253, 0.15)"); // Very light blue fade
         ctx.fillStyle = radial;
         ctx.fillRect(0, 0, width, height);
 
@@ -371,23 +371,21 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
     const startY = centerY - totalHeight / 2;
 
     if (options.style === "tech") {
-        // Tech Text Rendering: 2 Passes for Glow + Sharpness
+        // Tech Text Rendering: Darker blue for light theme
 
-        // Pass 1: Glow (Shadow only)
-        ctx.fillStyle = "rgba(255, 255, 255, 0)"; // Transparent text
-        ctx.shadowColor = "#00F0FF"; // Cyan Neon Glow
-        ctx.shadowBlur = 20 * scale;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
+        // Pass 1: Subtle Glow/Drop shadow
+        ctx.fillStyle = "rgba(255, 255, 255, 0)"; 
+        ctx.shadowColor = "rgba(14, 165, 233, 0.4)"; 
+        ctx.shadowBlur = 10 * scale;
         
         lines.forEach((line, index) => {
             ctx.fillText(line, width / 2, startY + index * lineHeight + lineHeight / 2);
         });
 
-        // Pass 2: Crisp Text (No Shadow)
+        // Pass 2: Crisp Text
         ctx.shadowColor = "transparent";
         ctx.shadowBlur = 0;
-        ctx.fillStyle = "#FFFFFF"; // Pure White
+        ctx.fillStyle = "#0369A1"; // Deep Sky Blue
         
         lines.forEach((line, index) => {
             ctx.fillText(line, width / 2, startY + index * lineHeight + lineHeight / 2);
