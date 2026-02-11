@@ -157,22 +157,69 @@ async function prepareFont(GlobalFonts: any): Promise<string> {
 }
 
 function wrapText(ctx: any, text: string, maxWidth: number, fontSize: number): string[] {
-    const words = text.split(' ');
-    const lines = [];
-    let currentLine = words[0];
+  const lines: string[] = [];
+  let currentLine = "";
+  let buffer = "";
 
-    for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const width = ctx.measureText(currentLine + " " + word).width;
-        if (width < maxWidth) {
-            currentLine += " " + word;
+  const pushLine = () => {
+    if (currentLine) lines.push(currentLine);
+    currentLine = "";
+  };
+
+  const processToken = (token: string) => {
+    // Check if the token itself is wider than maxWidth (e.g. extremely long word)
+    const tokenWidth = ctx.measureText(token).width;
+    if (tokenWidth > maxWidth) {
+      if (currentLine) pushLine();
+      
+      // Force split the long token char by char
+      let tempStr = "";
+      for (const char of token) {
+        if (ctx.measureText(tempStr + char).width > maxWidth) {
+          lines.push(tempStr);
+          tempStr = char;
         } else {
-            lines.push(currentLine);
-            currentLine = word;
+          tempStr += char;
         }
+      }
+      currentLine = tempStr;
+      return;
     }
-    lines.push(currentLine);
-    return lines;
+
+    // Normal wrapping logic
+    if (ctx.measureText(currentLine + token).width <= maxWidth) {
+      currentLine += token;
+    } else {
+      if (currentLine) pushLine();
+      // If the token causing the wrap is just space, skip it for the new line
+      if (token.trim() !== "") {
+        currentLine = token;
+      }
+    }
+  };
+
+  const flushBuffer = () => {
+    if (buffer) {
+      processToken(buffer);
+      buffer = "";
+    }
+  };
+
+  for (const char of text) {
+    const code = char.charCodeAt(0);
+    // ASCII printable characters (33-126) stick together as words
+    if (code >= 33 && code <= 126) {
+      buffer += char;
+    } else {
+      flushBuffer();
+      // Process space or CJK char as individual token
+      processToken(char);
+    }
+  }
+  flushBuffer();
+  if (currentLine) lines.push(currentLine);
+
+  return lines;
 }
 
 async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
@@ -308,6 +355,13 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
         : `"PingFang SC", "Microsoft YaHei", sans-serif`;
 
     const fontFamily = customFont ? `"${customFont}", ${baseFontFamily}` : baseFontFamily;
+
+    // Set font context BEFORE wrapping text so measureText works correctly
+    if (options.style === "tech") {
+        ctx.font = `900 ${fontSize}px ${fontFamily}`; // Extra Bold for tech
+    } else {
+        ctx.font = `bold ${fontSize}px ${fontFamily}`;
+    }
     
     // Wrap title text
     const lines = wrapText(ctx, options.title, width * 0.8, fontSize);
@@ -318,8 +372,6 @@ async function generateCoverWithCanvas(options: CoverOptions): Promise<void> {
 
     if (options.style === "tech") {
         // Tech Text Rendering: 2 Passes for Glow + Sharpness
-
-        ctx.font = `900 ${fontSize}px ${fontFamily}`; // Extra Bold for tech
 
         // Pass 1: Glow (Shadow only)
         ctx.fillStyle = "rgba(255, 255, 255, 0)"; // Transparent text
