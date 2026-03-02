@@ -7,6 +7,76 @@ import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { cleanImage, hasProblematicMetadata, resizeForWeChat } from "./image-utils.js";
+import hljs from "highlight.js/lib/core";
+import bash from "highlight.js/lib/languages/bash";
+import c from "highlight.js/lib/languages/c";
+import cpp from "highlight.js/lib/languages/cpp";
+import csharp from "highlight.js/lib/languages/csharp";
+import css from "highlight.js/lib/languages/css";
+import diff from "highlight.js/lib/languages/diff";
+import go from "highlight.js/lib/languages/go";
+import graphql from "highlight.js/lib/languages/graphql";
+import ini from "highlight.js/lib/languages/ini";
+import java from "highlight.js/lib/languages/java";
+import javascript from "highlight.js/lib/languages/javascript";
+import json from "highlight.js/lib/languages/json";
+import kotlin from "highlight.js/lib/languages/kotlin";
+import less from "highlight.js/lib/languages/less";
+import lua from "highlight.js/lib/languages/lua";
+import makefile from "highlight.js/lib/languages/makefile";
+import markdown from "highlight.js/lib/languages/markdown";
+import objectivec from "highlight.js/lib/languages/objectivec";
+import perl from "highlight.js/lib/languages/perl";
+import php from "highlight.js/lib/languages/php";
+import plaintext from "highlight.js/lib/languages/plaintext";
+import python from "highlight.js/lib/languages/python";
+import ruby from "highlight.js/lib/languages/ruby";
+import rust from "highlight.js/lib/languages/rust";
+import scss from "highlight.js/lib/languages/scss";
+import shell from "highlight.js/lib/languages/shell";
+import sql from "highlight.js/lib/languages/sql";
+import swift from "highlight.js/lib/languages/swift";
+import typescript from "highlight.js/lib/languages/typescript";
+import xml from "highlight.js/lib/languages/xml";
+import yaml from "highlight.js/lib/languages/yaml";
+
+const HLJS_LANGUAGES: Record<string, hljs.LanguageFn> = {
+  bash,
+  c,
+  cpp,
+  csharp,
+  css,
+  diff,
+  go,
+  graphql,
+  ini,
+  java,
+  javascript,
+  json,
+  kotlin,
+  less,
+  lua,
+  makefile,
+  markdown,
+  objectivec,
+  perl,
+  php,
+  plaintext,
+  python,
+  ruby,
+  rust,
+  scss,
+  shell,
+  sql,
+  swift,
+  typescript,
+  xml,
+  yaml,
+};
+
+Object.entries(HLJS_LANGUAGES).forEach(([name, lang]) => {
+  hljs.registerLanguage(name, lang);
+});
 
 interface WechatConfig {
   appId: string;
@@ -399,7 +469,6 @@ function renderMarkdownToHtml(markdownPath: string, theme: string = "default"): 
 }
 
 function inlineCss(html: string, css: string): string {
-  // Parse CSS rules
   const rules: Array<{ selector: string; declarations: Record<string, string> }> = [];
   const ruleRegex = /([^\{]+)\{([^\}]*)\}/g;
   let match;
@@ -424,20 +493,16 @@ function inlineCss(html: string, css: string): string {
     }
   }
 
-  // Apply styles to elements
   let result = html;
 
-  // Remove <style> and <link rel="stylesheet"> tags but keep the content
   result = result.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
   result = result.replace(/<link[^>]*rel=["']stylesheet["'][^>]*>/gi, '');
 
-  // Helper function to merge styles into an element tag
   function mergeStylesIntoTag(tag: string, newStyles: Record<string, string>): string {
     const styleMatch = tag.match(/style=["']([^"]*)["']/);
     let existingStyles: Record<string, string> = {};
 
     if (styleMatch) {
-      // Parse existing styles
       const styleText = styleMatch[1];
       const stylePairs = styleText.split(';').filter(s => s.trim());
       for (const pair of stylePairs) {
@@ -452,64 +517,246 @@ function inlineCss(html: string, css: string): string {
       }
     }
 
-    // Merge new styles (new styles take precedence)
     const mergedStyles = { ...existingStyles, ...newStyles };
     const styleString = Object.entries(mergedStyles)
       .map(([prop, value]) => `${prop}:${value}`)
       .join(';');
 
     if (styleMatch) {
-      // Replace existing style attribute
       return tag.replace(/style=["'][^"]*["']/, `style="${styleString}"`);
     } else {
-      // Add new style attribute before the closing >
       return tag.replace(/>$/, ` style="${styleString}">`);
     }
   }
 
-  // Apply inline styles
+  function parseSelector(sel: string): { type: 'class' | 'tag' | 'compound'; classes: string[]; tag?: string } | null {
+    sel = sel.trim();
+    if (!sel || sel === '*') return null;
+
+    if (sel.startsWith('.') && !sel.includes(' ') && !sel.includes(':') && !sel.includes('[')) {
+      const classes = sel.slice(1).split('.').filter(c => c);
+      return { type: 'class', classes };
+    }
+
+    if (!sel.includes('.') && !sel.includes(' ') && !sel.includes(':') && !sel.includes('[')) {
+      return { type: 'tag', tag: sel.toLowerCase(), classes: [] };
+    }
+
+    const tagMatch = sel.match(/^([a-z][a-z0-9]*)/i);
+    const tag = tagMatch ? tagMatch[1]!.toLowerCase() : undefined;
+    const classMatches = sel.match(/\.([a-zA-Z0-9_-]+)/g);
+    const classes = classMatches ? classMatches.map(c => c.slice(1)) : [];
+
+    if (classes.length > 0 || tag) {
+      return { type: 'compound', tag, classes };
+    }
+
+    return null;
+  }
+
   for (const rule of rules) {
     const selector = rule.selector;
     const declarations = rule.declarations;
 
-    // Skip universal selector (*) to avoid adding box-sizing to every element
-    // This prevents duplicate style issues
-    if (selector === '*') {
-      continue;
-    }
+    const parsed = parseSelector(selector);
+    if (!parsed) continue;
 
-    // Simple class selector: .class
-    if (selector.startsWith('.')) {
-      const className = selector.slice(1);
-      // Match elements that contain this class name
-      // Use \\b in template string to represent regex word boundary
-      const elementRegex = new RegExp(`<[^>]*\\bclass=["'][^"']*${className}[^"']*["'][^>]*>`, 'gi');
+    if (parsed.type === 'class' && parsed.classes.length === 1) {
+      const className = parsed.classes[0]!;
+      const elementRegex = new RegExp(`<[^>]*\\bclass=["'][^"']*\\b${className}\\b[^"']*["'][^>]*>`, 'gi');
 
       result = result.replace(elementRegex, (match) => {
-        // Double-check that the class name is actually in the class attribute
         const classMatch = match.match(/class=["']([^"']*)["']/);
         if (classMatch && classMatch[1].split(/\s+/).includes(className)) {
           return mergeStylesIntoTag(match, declarations);
         }
         return match;
       });
-    }
-    // Simple tag selector: tag (exclude html, head, body, meta, link, script, style, title)
-    else if (!selector.includes(' ') && !selector.includes(':') && !selector.includes('[')) {
-      const skipTags = ['html', 'head', 'body', 'meta', 'link', 'script', 'style', 'title', 'DOCTYPE'];
-      if (skipTags.includes(selector.toLowerCase())) {
+    } else if (parsed.type === 'tag') {
+      const skipTags = ['html', 'head', 'body', 'meta', 'link', 'script', 'style', 'title', 'doctype'];
+      if (skipTags.includes(parsed.tag!)) continue;
+
+      const tagRegex = new RegExp(`<${parsed.tag}([^>]*)>`, 'gi');
+      result = result.replace(tagRegex, (match) => {
+        return mergeStylesIntoTag(match, declarations);
+      });
+    } else if (parsed.type === 'compound') {
+      const { tag, classes } = parsed;
+
+      let elementRegex: RegExp;
+      if (tag && classes.length > 0) {
+        const classPattern = classes.map(c => `\\b${c}\\b`).join('[^"\']*');
+        elementRegex = new RegExp(`<${tag}[^>]*\\bclass=["\'][^"\']*${classPattern}[^"\']*["\'][^>]*>`, 'gi');
+      } else if (classes.length > 0) {
+        const classPattern = classes.map(c => `\\b${c}\\b`).join('[^"\']*');
+        elementRegex = new RegExp(`<[^>]*\\bclass=["\'][^"\']*${classPattern}[^"\']*["\'][^>]*>`, 'gi');
+      } else if (tag) {
+        elementRegex = new RegExp(`<${tag}([^>]*)>`, 'gi');
+      } else {
         continue;
       }
 
-      const tagRegex = new RegExp(`<${selector}([^>]*)>`, 'gi');
-
-      result = result.replace(tagRegex, (match, attrs) => {
+      result = result.replace(elementRegex, (match) => {
+        const classMatch = match.match(/class=["']([^"']*)["']/);
+        if (classes.length > 0 && classMatch) {
+          const elementClasses = classMatch[1].split(/\s+/);
+          const hasAllClasses = classes.every(c => elementClasses.includes(c));
+          if (!hasAllClasses) return match;
+        }
+        if (tag && !match.toLowerCase().startsWith(`<${tag}`)) return match;
         return mergeStylesIntoTag(match, declarations);
       });
     }
   }
 
   return result;
+}
+
+function detectLanguage(code: string): string {
+  const trimmedCode = code.trim();
+  
+  if (trimmedCode.startsWith('{') && trimmedCode.endsWith('}')) {
+    try {
+      JSON.parse(trimmedCode);
+      return 'json';
+    } catch {}
+  }
+  
+  if (/^(import|from|export|const|let|var|function|class|async|await)\s/m.test(trimmedCode)) {
+    if (/\b(interface|type|namespace|declare|as\s+\w+)\b/.test(trimmedCode)) {
+      return 'typescript';
+    }
+    return 'javascript';
+  }
+  
+  if (/^(def |class |import |from |if __name__|print\(|@)/m.test(trimmedCode)) {
+    return 'python';
+  }
+  
+  if (/^(package |import |func |var |type |struct |interface {)/m.test(trimmedCode)) {
+    return 'go';
+  }
+  
+  if (/^(fn |let |mut |impl |pub |use |mod |trait )/m.test(trimmedCode)) {
+    return 'rust';
+  }
+  
+  if (/^(public |private |protected |class |interface |namespace |using )/m.test(trimmedCode)) {
+    return trimmedCode.includes('System.') ? 'csharp' : 'java';
+  }
+  
+  if (/^#!/m.test(trimmedCode) || /\b(if|then|fi|for|do|done|case|esac)\b/.test(trimmedCode)) {
+    return 'bash';
+  }
+  
+  if (/^(\s*)(mkdir|cd|ls|cp|mv|rm|cat|echo|export|source)\s/m.test(trimmedCode)) {
+    return 'bash';
+  }
+  
+  if (/^(\$|npm|yarn|pnpm|bun|npx)\s/m.test(trimmedCode)) {
+    return 'bash';
+  }
+  
+  if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)\s/mi.test(trimmedCode)) {
+    return 'sql';
+  }
+  
+  if (/^---\n[\s\S]*?\n---/.test(trimmedCode) || /^#{1,6}\s/m.test(trimmedCode)) {
+    return 'markdown';
+  }
+  
+  if (/<[a-z][\s\S]*>/i.test(trimmedCode) && /<\/[a-z]+>/i.test(trimmedCode)) {
+    if (/\s(class|id|style|onclick)=/i.test(trimmedCode)) {
+      return 'html';
+    }
+    return 'xml';
+  }
+  
+  if (/^[\w\-]+:\s*[\w\d\-\s,]+;$/m.test(trimmedCode)) {
+    return 'css';
+  }
+  
+  return 'plaintext';
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatHighlightedCode(html: string): string {
+  let formatted = html;
+  formatted = formatted.replace(/\t/g, "    ");
+  formatted = formatted.replace(/\r\n/g, "<br/>").replace(/\n/g, "<br/>");
+  formatted = formatted.replace(/(>[^<]+)|(^[^<]+)/g, (str: string) => str.replace(/\s/g, "&nbsp;"));
+  return formatted;
+}
+
+function highlightCodeBlocks(html: string): string {
+  const codeBlockRegex = /<pre[^>]*><code(?:\s+class="language-(\w+)")?>([\s\S]*?)<\/code><\/pre>/gi;
+  
+  let result = html;
+  let highlightedCount = 0;
+  
+  result = result.replace(codeBlockRegex, (match, langClass: string | undefined, codeContent: string) => {
+    const decodedCode = codeContent
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+    
+    const language = langClass || detectLanguage(decodedCode);
+    
+    let highlighted: string;
+    try {
+      if (hljs.getLanguage(language)) {
+        highlighted = hljs.highlight(decodedCode, { language }).value;
+      } else {
+        highlighted = hljs.highlightAuto(decodedCode).value;
+      }
+    } catch {
+      highlighted = escapeHtml(decodedCode);
+    }
+    
+    const formatted = formatHighlightedCode(highlighted);
+    highlightedCount++;
+    
+    return `<pre class="hljs code__pre" style="font-size:90%;overflow-x:auto;border-radius:8px;line-height:1.5;margin:10px 8px;padding:0"><code class="language-${language}" style="display:-webkit-box;padding:0.5em 1em 1em;overflow-x:auto;text-indent:0;background:#f6f8fa;color:#24292f;white-space:nowrap;margin:0;border-radius:4px">${formatted}</code></pre>`;
+  });
+  
+  if (highlightedCount > 0) {
+    console.error(`[wechat-api] Highlighted ${highlightedCount} code blocks`);
+  }
+  
+  return result;
+}
+
+function loadHljsTheme(): string {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const hljsThemePath = path.join(__dirname, "md", "themes", "hljs-github.css");
+
+  if (fs.existsSync(hljsThemePath)) {
+    return fs.readFileSync(hljsThemePath, "utf-8");
+  }
+  return '';
+}
+
+function inlineCodeBlockStyles(html: string): string {
+  const hljsCss = loadHljsTheme();
+  if (!hljsCss) {
+    console.error("[wechat-api] Warning: hljs-github.css not found");
+    return html;
+  }
+
+  console.error("[wechat-api] Applying highlight.js styles...");
+  return inlineCss(html, hljsCss);
 }
 
 function cleanHtmlWhitespace(html: string): string {
@@ -532,25 +779,22 @@ function cleanHtmlWhitespace(html: string): string {
 
 function extractHtmlContent(htmlPath: string, shouldInlineCss: boolean = false): string {
   const html = fs.readFileSync(htmlPath, "utf-8");
-  
-  // Inline CSS if requested
+
   let processedHtml = html;
   if (shouldInlineCss) {
-    // Extract CSS from <style> tags
     let css = '';
     const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
     let styleMatch;
     while ((styleMatch = styleRegex.exec(html)) !== null) {
       css += styleMatch[1] + '\n';
     }
-    
+
     if (css.trim()) {
       console.error("[wechat-api] Inlining CSS styles...");
       processedHtml = inlineCss(html, css);
     }
   }
-  
-  // Extract content from <body> or specific containers
+
   let content: string;
   const outputMatch = processedHtml.match(/<div id="output">([\s\S]*?)<\/div>\s*<\/body>/);
   if (outputMatch) {
@@ -559,10 +803,15 @@ function extractHtmlContent(htmlPath: string, shouldInlineCss: boolean = false):
     const bodyMatch = processedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
     content = bodyMatch ? bodyMatch[1]!.trim() : processedHtml;
   }
-  
-  // Clean up whitespace to prevent &nbsp; issues in WeChat
+
+  console.error("[wechat-api] Highlighting code blocks in HTML...");
+  content = highlightCodeBlocks(content);
+
+  console.error("[wechat-api] Inlining code block styles for WeChat compatibility...");
+  content = inlineCodeBlockStyles(content);
+
   content = cleanHtmlWhitespace(content);
-  
+
   return content;
 }
 
@@ -763,12 +1012,16 @@ async function main(): Promise<void> {
   console.error(`[wechat-api] Type: ${args.articleType}`);
 
   if (args.dryRun) {
+    const outputHtmlPath = htmlPath.replace('.html', '-processed.html');
+    fs.writeFileSync(outputHtmlPath, htmlContent, 'utf-8');
+    console.error(`[wechat-api] Processed HTML saved to: ${outputHtmlPath}`);
     console.log(JSON.stringify({
       articleType: args.articleType,
       title,
       author: author || undefined,
       digest: digest || undefined,
       htmlPath,
+      processedHtmlPath: outputHtmlPath,
       contentLength: htmlContent.length,
     }, null, 2));
     return;
