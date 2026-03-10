@@ -614,68 +614,92 @@ function inlineCss(html: string, css: string): string {
 
 function detectLanguage(code: string): string {
   const trimmedCode = code.trim();
-  
+
+  // JSON 检测：优先检测，支持多种 JSON 结构（对象、数组）
+  // 检查是否是 JSON 对象
   if (trimmedCode.startsWith('{') && trimmedCode.endsWith('}')) {
     try {
-      JSON.parse(trimmedCode);
-      return 'json';
+      const parsed = JSON.parse(trimmedCode);
+      if (typeof parsed === 'object') return 'json';
     } catch {}
   }
-  
+
+  // 检查是否是 JSON 数组
+  if (trimmedCode.startsWith('[') && trimmedCode.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmedCode);
+      if (Array.isArray(parsed)) return 'json';
+    } catch {}
+  }
+
+  // 检测包含典型 JSON 特征的内容（即使格式不完美）
+  // 查找 "key": value 模式
+  const jsonKeyValuePattern = /"[^"]+"\s*:\s*("[^"]*"|\d+|true|false|null|\[|\{)/;
+  if (jsonKeyValuePattern.test(trimmedCode)) {
+    // 尝试提取并解析 JSON
+    const jsonMatch = trimmedCode.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        JSON.parse(jsonMatch[0]);
+        return 'json';
+      } catch {}
+    }
+  }
+
   if (/^(import|from|export|const|let|var|function|class|async|await)\s/m.test(trimmedCode)) {
     if (/\b(interface|type|namespace|declare|as\s+\w+)\b/.test(trimmedCode)) {
       return 'typescript';
     }
     return 'javascript';
   }
-  
+
   if (/^(def |class |import |from |if __name__|print\(|@)/m.test(trimmedCode)) {
     return 'python';
   }
-  
+
   if (/^(package |import |func |var |type |struct |interface {)/m.test(trimmedCode)) {
     return 'go';
   }
-  
+
   if (/^(fn |let |mut |impl |pub |use |mod |trait )/m.test(trimmedCode)) {
     return 'rust';
   }
-  
+
   if (/^(public |private |protected |class |interface |namespace |using )/m.test(trimmedCode)) {
     return trimmedCode.includes('System.') ? 'csharp' : 'java';
   }
-  
+
   if (/^#!/m.test(trimmedCode) || /\b(if|then|fi|for|do|done|case|esac)\b/.test(trimmedCode)) {
     return 'bash';
   }
-  
+
   if (/^(\s*)(mkdir|cd|ls|cp|mv|rm|cat|echo|export|source)\s/m.test(trimmedCode)) {
     return 'bash';
   }
-  
+
   if (/^(\$|npm|yarn|pnpm|bun|npx)\s/m.test(trimmedCode)) {
     return 'bash';
   }
-  
+
   if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH)\s/mi.test(trimmedCode)) {
     return 'sql';
   }
-  
+
+  if (/^[\w\-]+:\s*[\w\d\-\s,]+;$/m.test(trimmedCode)) {
+    return 'css';
+  }
+
   if (/^---\n[\s\S]*?\n---/.test(trimmedCode) || /^#{1,6}\s/m.test(trimmedCode)) {
     return 'markdown';
   }
-  
+
   if (/<[a-z][\s\S]*>/i.test(trimmedCode) && /<\/[a-z]+>/i.test(trimmedCode)) {
     if (/\s(class|id|style|onclick)=/i.test(trimmedCode)) {
       return 'html';
     }
     return 'xml';
   }
-  
-  if (/^[\w\-]+:\s*[\w\d\-\s,]+;$/m.test(trimmedCode)) {
-    return 'css';
-  }
-  
+
   return 'plaintext';
 }
 
@@ -697,22 +721,43 @@ function formatHighlightedCode(html: string): string {
 }
 
 function highlightCodeBlocks(html: string): string {
+  // 处理 <pre><code> 格式
   const codeBlockRegex = /<pre[^>]*><code(?:\s+class="language-(\w+)")?>([\s\S]*?)<\/code><\/pre>/gi;
-  
+  // 处理只有 <pre> 没有 <code> 的情况（某些 HTML 生成器输出）
+  const preOnlyRegex = /<pre([^>]*)>([\s\S]*?)<\/pre>/gi;
+
   let result = html;
   let highlightedCount = 0;
-  
+
+  // 先处理 <pre><code> 格式
   result = result.replace(codeBlockRegex, (match, langClass: string | undefined, codeContent: string) => {
-    const decodedCode = codeContent
+    let decodedCode = codeContent
       .replace(/&lt;/g, '<')
       .replace(/&gt;/g, '>')
       .replace(/&amp;/g, '&')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
       .replace(/&nbsp;/g, ' ');
-    
+
     const language = langClass || detectLanguage(decodedCode);
-    
+
+    // 美化 JSON/JSONC 代码块
+    if (language === 'json' || language === 'jsonc') {
+      try {
+        let cleanJson = decodedCode;
+        // JSONC 需要移除注释后再解析
+        if (language === 'jsonc') {
+          cleanJson = decodedCode
+            .replace(/^\s*\/\/.*$/gm, '') // 移除 // 注释
+            .replace(/^\s*\/\*[\s\S]*?\*\//gm, ''); // 移除 /* */ 注释
+        }
+        const parsed = JSON.parse(cleanJson);
+        decodedCode = JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        // 解析失败时使用原始文本
+      }
+    }
+
     let highlighted: string;
     try {
       if (hljs.getLanguage(language)) {
@@ -723,17 +768,94 @@ function highlightCodeBlocks(html: string): string {
     } catch {
       highlighted = escapeHtml(decodedCode);
     }
-    
+
     const formatted = formatHighlightedCode(highlighted);
     highlightedCount++;
-    
+
     return `<pre class="hljs code__pre" style="font-size:90%;overflow-x:auto;border-radius:8px;line-height:1.5;margin:10px 8px;padding:0"><code class="language-${language}" style="display:-webkit-box;padding:0.5em 1em 1em;overflow-x:auto;text-indent:0;background:#f6f8fa;color:#24292f;white-space:nowrap;margin:0;border-radius:4px">${formatted}</code></pre>`;
   });
-  
+
+  // 再处理只有 <pre> 没有 <code> 的情况
+  result = result.replace(preOnlyRegex, (match, preAttrs: string, codeContent: string) => {
+    // 跳过已经处理过的 code__pre 类
+    if (preAttrs.includes('code__pre')) {
+      return match;
+    }
+
+    // 跳过包含代码子标签的 pre（已经有 code 标签了）
+    if (codeContent.trim().startsWith('<code')) {
+      return match;
+    }
+
+    // 跳过包含 HTML 结构的内容（表格、图片等）
+    if (codeContent.includes('<table') || codeContent.includes('<img') || codeContent.includes('<div')) {
+      return match;
+    }
+
+    // 跳过纯 bash 命令（以 # 或 $ 开头的脚本）
+    const trimmedContent = codeContent.trim();
+    if (trimmedContent.startsWith('# ') || trimmedContent.startsWith('$ ') || trimmedContent.startsWith('> ')) {
+      // 检查是否是 shell 脚本风格
+      const lines = trimmedContent.split('\n').filter(line => line.trim());
+      const shellLikeLines = lines.filter(line => line.startsWith('# ') || line.startsWith('$ ')).length;
+      if (shellLikeLines > 0 && shellLikeLines / lines.length > 0.5) {
+        return match; // 保留原始格式
+      }
+    }
+
+    // 解码 HTML 实体
+    let decodedCode = codeContent
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+
+    // 检测语言（使用解码后的内容）
+    const language = detectLanguage(decodedCode);
+
+    // 如果是 JSON，尝试美化它
+    if (language === 'json' || language === 'jsonc') {
+      try {
+        let cleanJson = decodedCode;
+
+        if (language === 'jsonc') {
+          cleanJson = cleanJson
+            .replace(/^\s*\/\/.*$/gm, '')
+            .replace(/^\s*\/\*[\s\S]*?\*\//gm, '');
+        }
+        const parsed = JSON.parse(cleanJson);
+        decodedCode = JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        // 解析失败时使用原始文本
+      }
+    }
+
+    // 对代码进行 HTML 转义以便显示
+    let highlighted: string;
+    try {
+      const tempCode = language === 'json' || language === 'jsonc' ? decodedCode : decodedCode;
+
+      if (hljs.getLanguage(language)) {
+        highlighted = hljs.highlight(tempCode, { language }).value;
+      } else {
+        highlighted = hljs.highlightAuto(tempCode).value;
+      }
+    } catch {
+      highlighted = escapeHtml(decodedCode);
+    }
+
+    const formatted = formatHighlightedCode(highlighted);
+    highlightedCount++;
+
+    return `<pre class="hljs code__pre" style="font-size:90%;overflow-x:auto;border-radius:8px;line-height:1.5;margin:10px 8px;padding:0"><code class="language-${language}" style="display:-webkit-box;padding:0.5em 1em 1em;overflow-x:auto;text-indent:0;background:#f6f8fa;color:#24292f;white-space:nowrap;margin:0;border-radius:4px">${formatted}</code></pre>`;
+  });
+
   if (highlightedCount > 0) {
     console.error(`[wechat-api] Highlighted ${highlightedCount} code blocks`);
   }
-  
+
   return result;
 }
 

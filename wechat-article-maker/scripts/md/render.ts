@@ -336,8 +336,26 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
       const isLanguageRegistered = hljs.getLanguage(langText);
       const language = isLanguageRegistered ? langText : "plaintext";
 
+      // 美化 JSON/JSONC 代码块
+      let codeText = text;
+      if (langText === "json" || langText === "jsonc") {
+        try {
+          // JSONC 需要移除注释后再解析
+          let cleanJson = text;
+          if (langText === "jsonc") {
+            cleanJson = text
+              .replace(/^\s*\/\/.*$/gm, "") // 移除 // 注释
+              .replace(/^\s*\/\*[\s\S]*?\*\//gm, ""); // 移除 /* */ 注释
+          }
+          const parsed = JSON.parse(cleanJson);
+          codeText = JSON.stringify(parsed, null, 2);
+        } catch (e) {
+          // 解析失败时使用原始文本
+        }
+      }
+
       const highlighted = highlightAndFormatCode(
-        text,
+        codeText,
         language,
         hljs,
         !!opts.isShowLineNumber
@@ -346,7 +364,7 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
       const span = `<span class="mac-sign" style="padding: 10px 14px 0;">${macCodeSvg}</span>`;
       let pendingAttr = "";
       if (!isLanguageRegistered && langText !== "plaintext") {
-        const escapedText = text.replace(/"/g, "&quot;");
+        const escapedText = codeText.replace(/"/g, "&quot;");
         pendingAttr = ` data-language-pending="${langText}" data-raw-code="${escapedText}" data-show-line-number="${opts.isShowLineNumber}"`;
       }
       const code = `<code class="language-${lang}"${pendingAttr}>${highlighted}</code>`;
