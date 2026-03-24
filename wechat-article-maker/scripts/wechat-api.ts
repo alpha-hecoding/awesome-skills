@@ -725,6 +725,8 @@ function highlightCodeBlocks(html: string): string {
   const codeBlockRegex = /<pre[^>]*><code(?:\s+class="language-(\w+)")?>([\s\S]*?)<\/code><\/pre>/gi;
   // 处理只有 <pre> 没有 <code> 的情况（某些 HTML 生成器输出）
   const preOnlyRegex = /<pre([^>]*)>([\s\S]*?)<\/pre>/gi;
+  // 处理 <section> 模拟的代码块（background: #f6f8fa 是特征）
+  const sectionCodeRegex = /<section[^>]*style="[^"]*background:\s*#f6f8fa[^"]*"[^>]*>([\s\S]*?)<\/section>/gi;
 
   let result = html;
   let highlightedCount = 0;
@@ -841,6 +843,59 @@ function highlightCodeBlocks(html: string): string {
         highlighted = hljs.highlight(tempCode, { language }).value;
       } else {
         highlighted = hljs.highlightAuto(tempCode).value;
+      }
+    } catch {
+      highlighted = escapeHtml(decodedCode);
+    }
+
+    const formatted = formatHighlightedCode(highlighted);
+    highlightedCount++;
+
+    return `<pre class="hljs code__pre" style="font-size:90%;overflow-x:auto;border-radius:8px;line-height:1.5;margin:10px 8px;padding:0"><code class="language-${language}" style="display:-webkit-box;padding:0.5em 1em 1em;overflow-x:auto;text-indent:0;background:#f6f8fa;color:#24292f;white-space:nowrap;margin:0;border-radius:4px">${formatted}</code></pre>`;
+  });
+
+  // 最后处理 <section> 模拟的代码块
+  result = result.replace(sectionCodeRegex, (match, codeContent: string) => {
+    // 将 <br> 标签转换为换行符
+    let textContent = codeContent
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<br\/>/gi, '\n');
+
+    // 解码 HTML 实体
+    let decodedCode = textContent
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+
+    // 检测语言
+    const language = detectLanguage(decodedCode);
+
+    // 美化 JSON/JSONC
+    if (language === 'json' || language === 'jsonc') {
+      try {
+        let cleanJson = decodedCode;
+        if (language === 'jsonc') {
+          cleanJson = decodedCode
+            .replace(/^\s*\/\/.*$/gm, '')
+            .replace(/^\s*\/\*[\s\S]*?\*\//gm, '');
+        }
+        const parsed = JSON.parse(cleanJson);
+        decodedCode = JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        // 解析失败时使用原始文本
+      }
+    }
+
+    // 语法高亮
+    let highlighted: string;
+    try {
+      if (hljs.getLanguage(language)) {
+        highlighted = hljs.highlight(decodedCode, { language }).value;
+      } else {
+        highlighted = hljs.highlightAuto(decodedCode).value;
       }
     } catch {
       highlighted = escapeHtml(decodedCode);

@@ -570,6 +570,36 @@ header: "调研"
 </html>
 ```
 
+**⚠️ 重要：代码块格式规范**
+
+代码块必须使用标准的 `<pre><code>` 标签，**禁止使用 `<section>` 或其他标签模拟代码块**：
+
+✅ **正确格式**：
+```html
+<pre><code class="language-json">{
+  "name": "example"
+}</code></pre>
+```
+
+❌ **错误格式**（不支持）：
+```html
+<!-- 禁止使用 section 模拟代码块 -->
+<section style="background: #f6f8fa; padding: 15px; ...">
+{<br>
+  "name": "example"<br>
+}
+</section>
+```
+
+**语言标识**：
+- 必须在 `<code>` 标签上添加 `class="language-xxx"` 属性
+- 支持的语言：`json`, `jsonc`, `javascript`, `typescript`, `python`, `bash`, `go`, `rust`, `java`, `c`, `cpp`, `sql` 等
+- 示例：`<code class="language-python">`, `<code class="language-bash">`
+
+**自动化处理**：
+- Markdown 转 HTML：已自动使用标准 `<pre><code>` 格式（无需手动干预）
+- 非标准格式：`wechat-api.ts` 会尝试自动识别并转换 `background: #f6f8fa` 的 `<section>` 标签
+
 ### 步骤 9: 质量检查
 
 **内容检查**：
