@@ -17,6 +17,7 @@ Claude Code 技能集合 - 微信公众号文章创作与发布工具
 - 🖼️ 图片处理 - 自动下载、元数据清洗、AIGC 标记移除
 - 📤 多种发布方式 - API 发布、浏览器发布、图文发布
 - 🔧 Markdown 扩展 - 支持 10+ 扩展插件（数学公式、脚注、目录等）
+- 💻 代码块优化 - 自动语法高亮、JSON 美化、支持非标准格式转换
 
 **技术栈**：
 - TypeScript + Bun/Node.js
@@ -35,6 +36,15 @@ npx -y bun scripts/md-to-wechat.ts article.md --theme grace
 # 生成封面
 npx -y bun scripts/generate-cover.ts --title "标题" --output cover.jpg
 ```
+
+**代码块处理**：
+
+文章中的代码块会自动进行语法高亮和格式化：
+
+- ✅ **标准格式**：`<pre><code class="language-xxx">` 自动高亮
+- ✅ **非标准格式**：`<section style="background: #f6f8fa">` 自动识别并转换
+- ✅ **JSON 美化**：自动格式化压缩的 JSON，添加缩进
+- ✅ **语言检测**：自动识别 json, javascript, python, bash 等 30+ 语言
 
 **详细文档**：
 - [wechat-article-maker/README.md](wechat-article-maker/README.md) - 项目说明
@@ -110,7 +120,7 @@ awesome-skills/
 
 ## 许可证
 
-MIT
+Apache License 2.0
 
 ## 致谢
 
