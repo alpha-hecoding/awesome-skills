@@ -902,36 +902,44 @@ function cleanHtmlWhitespace(html: string): string {
 function extractHtmlContent(htmlPath: string, shouldInlineCss: boolean = false): string {
   const html = fs.readFileSync(htmlPath, "utf-8");
 
-  let processedHtml = html;
+  // Extract CSS before processing (to apply later)
+  let css = '';
   if (shouldInlineCss) {
-    let css = '';
     const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
     let styleMatch;
     while ((styleMatch = styleRegex.exec(html)) !== null) {
       css += styleMatch[1] + '\n';
     }
-
     if (css.trim()) {
-      console.error("[wechat-api] Inlining CSS styles...");
-      processedHtml = inlineCss(html, css);
+      console.error("[wechat-api] Found CSS styles to inline later...");
     }
   }
 
+  // Extract body content first
   let content: string;
-  const outputMatch = processedHtml.match(/<div id="output">([\s\S]*?)<\/div>\s*<\/body>/);
+  const outputMatch = html.match(/<div id="output">([\s\S]*?)<\/div>\s*<\/body>/);
   if (outputMatch) {
     content = outputMatch[1]!.trim();
   } else {
-    const bodyMatch = processedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    content = bodyMatch ? bodyMatch[1]!.trim() : processedHtml;
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    content = bodyMatch ? bodyMatch[1]!.trim() : html;
   }
 
+  // Step 1: Highlight code blocks (before page CSS inlining)
   console.error("[wechat-api] Highlighting code blocks in HTML...");
   content = highlightCodeBlocks(content);
 
+  // Step 2: Inline code block styles (apply hljs theme)
   console.error("[wechat-api] Inlining code block styles for WeChat compatibility...");
   content = inlineCodeBlockStyles(content);
 
+  // Step 3: Inline page CSS styles (if --inline-css flag was used)
+  if (shouldInlineCss && css.trim()) {
+    console.error("[wechat-api] Inlining page CSS styles...");
+    content = inlineCss(content, css);
+  }
+
+  // Step 4: Clean whitespace
   content = cleanHtmlWhitespace(content);
 
   return content;

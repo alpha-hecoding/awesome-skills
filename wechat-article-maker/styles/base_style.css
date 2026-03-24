@@ -1,0 +1,252 @@
+/* 微信公众号文章基础样式库 */
+
+/* ========== 全局样式 ========== */
+body {
+    font-family: Optima, "Microsoft YaHei", PingFangSC-regular, serif;
+    font-size: 16px;
+    line-height: 1.8;
+    color: rgb(89, 89, 89);
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ========== 颜色方案 ========== */
+:root {
+    --primary-color: #35B378;  /* 主色调:绿色 */
+    --text-color: #595959;      /* 正文颜色:深灰 */
+    --bg-color: #ffffff;        /* 背景颜色:白色 */
+    --link-color: #35B378;      /* 链接颜色:绿色 */
+    --code-bg: #282c34;         /* 代码块背景:深色 */
+}
+
+/* ========== 标题样式 ========== */
+h1 {
+    font-size: 24px;
+    color: rgba(53, 179, 120, 1);
+    font-weight: bold;
+    margin: 30px 0 15px;
+}
+
+h2 {
+    font-size: 18px;
+    color: rgb(255, 255, 255);
+    background: rgb(0, 0, 0);
+    padding: 2px 10px;
+    font-weight: bold;
+    margin: 30px 0 15px;
+}
+
+h3 {
+    font-size: 20px;
+    color: rgb(53, 179, 120);
+    font-weight: bold;
+    margin: 30px 0 15px;
+}
+
+/* ========== 段落和文本 ========== */
+p {
+    margin: 8px 0;
+    padding: 8px 0;
+}
+
+strong {
+    color: rgb(53, 179, 120);
+    font-weight: bold;
+}
+
+/* ========== 引用块 ========== */
+blockquote {
+    margin: 20px 0;
+    padding: 10px 10px 10px 20px;
+    border-left: 3px solid rgb(53, 179, 120);
+    background: rgb(251, 249, 253);
+}
+
+/* ========== 列表 ========== */
+ul {
+    list-style-type: disc;
+    margin: 8px 0;
+    padding: 0 0 0 25px;
+}
+
+ol {
+    list-style-type: decimal;
+    margin: 8px 0;
+    padding: 0 0 0 25px;
+}
+
+/* ========== 分隔线 ========== */
+hr {
+    margin: 10px 0;
+    border-top: 1px solid rgb(53, 179, 120);
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+}
+
+/* ========== 图片 ========== */
+img {
+    display: block;
+    margin: 20px auto;
+    max-width: 100%;
+}
+
+/* ========== 代码样式 ========== */
+code {
+    font-family: Consolas, Monaco, Menlo, monospace;
+    font-size: 14px;
+    background: rgba(27, 31, 35, 0.05);
+    padding: 2px 4px;
+    border-radius: 4px;
+    color: rgba(30, 107, 184, 1);
+}
+
+pre {
+    background: #282c34;
+    padding: 15px;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin: 10px 0;
+}
+
+pre code {
+    background: none;
+    padding: 0;
+    color: #abb2bf;
+}
+
+/* ========== 特殊样式类 ========== */
+.section-title {
+    font-size: 18px;
+    color: rgb(0, 0, 0);
+    font-weight: bold;
+    margin: 25px 0 10px;
+}
+
+/* ========== 容器样式(部分文章使用) ========== */
+#bm-md {
+    margin: 0px;
+    padding: 0px 10px;
+    background: none 0% 0% / auto no-repeat scroll padding-box border-box rgba(0, 0, 0, 0);
+    width: auto;
+    font-family: Optima, "Microsoft YaHei", PingFangSC-regular, serif;
+    font-size: 16px;
+    color: rgb(0, 0, 0);
+    line-height: 1.5em;
+}
+
+#bm-md p {
+    color: rgb(89, 89, 89);
+    font-size: 15px;
+    line-height: 1.8em;
+    letter-spacing: 0.04em;
+    text-align: left;
+    text-indent: 0em;
+    margin: 0px;
+    padding: 8px 0px;
+}
+
+#bm-md h1 span {
+    font-size: 24px;
+    color: rgba(53, 179, 120, 1);
+    line-height: 1.5em;
+    letter-spacing: 0em;
+    font-weight: bold;
+    display: block;
+}
+
+#bm-md h2 span {
+    font-size: 18px;
+    color: rgb(255, 255, 255);
+    background: none 0% 0% / auto no-repeat scroll padding-box border-box rgb(0, 0, 0);
+    line-height: 1.5em;
+    letter-spacing: 0em;
+    padding: 2px 10px;
+    font-weight: bold;
+    display: block;
+}
+
+#bm-md h3 span {
+    font-size: 20px;
+    color: rgb(53, 179, 120);
+    line-height: 1.5em;
+    letter-spacing: 0em;
+    font-weight: bold;
+    display: block;
+}
+
+#bm-md strong {
+    color: rgb(53, 179, 120);
+    font-weight: bold;
+}
+
+/* ========== 提示框样式(部分文章使用) ========== */
+.highlight-box {
+    background: #fff9e6;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-left: 4px solid #ffc107;
+}
+
+.warning-box {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+    color: #856404;
+}
+
+.success-box {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+    color: #155724;
+}
+
+/* ========== 表格样式(部分文章使用) ========== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 15px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+    text-align: left;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* ========== 响应式设计 ========== */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    h2 {
+        font-size: 16px;
+    }
+
+    h3 {
+        font-size: 18px;
+    }
+}

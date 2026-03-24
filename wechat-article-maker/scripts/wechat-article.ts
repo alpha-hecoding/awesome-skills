@@ -674,7 +674,7 @@ Options:
   --html <path>      HTML file to paste (alternative to --content)
   --markdown <path>  Markdown file to convert and post (recommended)
   --theme <name>     Theme for markdown (default, grace, simple)
-  --author <name>    Author name (default: 宝玉)
+  --author <name>    Author name (default: AI观察)
   --summary <text>   Article summary
   --image <path>     Content image, can repeat (only with --content)
   --submit           Save as draft

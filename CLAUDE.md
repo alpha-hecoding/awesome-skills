@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository contains WeChat Official Account (微信公众号) article creation skills:
 
-1. **wechat-article-skill** - Python-based skill for OpenClaw
-2. **wechat-article-maker** - TypeScript/Node.js based cross-platform tool
+1. **wechat-article-maker** - Complete tool with AI generation, Markdown rendering, image processing, and publishing (merged from generator + maker)
+2. **wechat-article-skill** - Python-based skill for OpenClaw (cover generation + basic publishing)
 
 ## wechat-article-maker (TypeScript)
 
@@ -107,14 +107,41 @@ wechat-article-maker/
 │   ├── wechat-api.ts         # API publishing (image upload, draft creation)
 │   ├── wechat-article.ts     # Browser automation publishing
 │   ├── wechat-browser.ts     # Image-text message publishing
+│   ├── wechat-agent-browser.ts  # Agent browser publishing
 │   ├── generate-cover.ts     # Cover generation (@napi-rs/canvas, sharp)
 │   ├── md-to-wechat.ts       # Markdown → HTML with themes
 │   ├── ensure-deps.ts        # Auto-install dependencies
 │   ├── image-utils.ts        # Image cleaning (sharp integration)
+│   ├── cdp.ts                # Chrome DevTools Protocol utilities
+│   ├── copy-to-clipboard.ts  # Clipboard copy utility
+│   ├── paste-from-clipboard.ts # Clipboard paste utility
 │   └── md/
 │       ├── render.ts         # Markdown rendering engine
-│       ├── themes/           # CSS themes
-│       └── extensions/       # Plugins (katex, toc, alert, etc.)
+│       ├── themes/           # CSS themes (5: base, default, grace, simple, hljs-github)
+│       ├── extensions/       # Plugins (10: alert, footnotes, katex, toc, etc.)
+│       └── utils/            # Utility functions (languages.ts)
+├── templates/                # AI article generation templates
+│   ├── opening_patterns.md   # Opening hooks (pain-point patterns)
+│   ├── closing_patterns.md   # Ending patterns (value summary)
+│   ├── language_rules.md     # Conversational style rules
+│   └── structure_guide.md    # Structure templates by style type
+├── styles/                   # Article styles
+│   └── base_style.css        # Base CSS for WeChat articles
+├── examples/                 # Sample articles
+│   ├── beginner_article.html
+│   ├── intermediate_article.html
+│   └── advanced_article.html
+├── references/               # Reference documentation
+│   ├── article-posting.md    # Article publishing guide
+│   └── image-text-posting.md # Image-text publishing guide
+├── SKILL.md                  # Complete skill documentation
+├── SKILL-old.md              # Legacy skill documentation
+├── EXTEND-example.md         # Extension config example
+├── EXTEND-desc.md            # Extension config description
+├── package.json              # Dependency lock file
+├── CROSS_PLATFORM.md         # Cross-platform guide
+├── USAGE.md                  # Usage guide
+└── README.md                 # Project overview
 
 wechat-article-skill/
 ├── scripts/

@@ -1,6 +1,6 @@
 ---
 name: wechat-article-maker
-description: 智能创作并发布微信公众号文章。支持内容理解、链接分析、Markdown转换、图片清洗、样式处理和一键发布。当用户提到"创作公众号文章"、"发布文章链接"、"生成微信文章"、"推送到微信公众号"、"发布到微信公众号"时使用。
+description: 智能创作并发布微信公众号文章。支持AI文章生成、链接发布、Markdown转换、图片清洗、样式处理和一键发布。当用户提到"创作公众号文章"、"发布文章链接"、"生成微信文章"、"推送到微信公众号"、"发布到微信公众号"时使用。
 ---
 
 # 微信公众号文章创作与发布
@@ -25,8 +25,20 @@ wechat-article-maker/
 │       ├── render.ts
 │       ├── themes/          # 主题样式
 │       └── extensions/      # 扩展插件
+├── templates/                # 🆕 文章创作模板库
+│   ├── opening_patterns.md  # 开篇模式库
+│   ├── closing_patterns.md  # 结尾模式库
+│   ├── language_rules.md    # 语言风格规则
+│   └── structure_guide.md   # 结构模板
+├── styles/                   # 🆕 文章样式
+│   └── base_style.css       # 基础样式
+├── examples/                 # 🆕 示例文章
+│   ├── beginner_article.html
+│   ├── intermediate_article.html
+│   └── advanced_article.html
 ├── references/              # 参考文档
 ├── SKILL.md                 # 技能文档
+├── package.json             # 依赖锁定
 └── README.md                # 项目说明
 ```
 
@@ -53,14 +65,16 @@ npx -y bun "${SKILL_DIR}/scripts/generate-cover.ts" --title "标题" --output co
 **运行时要求**：
 - ✅ Bun（推荐，通过 `npx -y bun` 使用）
 
-**依赖说明**（自动安装）：
+**核心依赖**（自动安装）：
 - `front-matter` - Frontmatter 解析
 - `highlight.js` - 代码高亮
 - `marked` - Markdown 渲染引擎
 - `reading-time` - 阅读时间计算
 - `juice` - CSS 内联转换
-- `@napi-rs/canvas` - 高性能图片生成（可选，用于封面）
-- `sharp` - 图片处理库（内置，用于图片清理和封面生成）
+
+**可选依赖**（封面图生成）：
+- `@napi-rs/canvas` - 高性能图片生成
+- `sharp` - 图片处理库
 
 **依赖说明**：
 - `sharp` 会在首次运行时通过 `scripts/ensure-deps.ts` 自动安装
@@ -68,11 +82,27 @@ npx -y bun "${SKILL_DIR}/scripts/generate-cover.ts" --title "标题" --output co
 
 ## 功能概述
 
-本技能提供完整的微信公众号文章工作流：
+本技能提供**双重能力**的微信公众号文章工作流：
 
-1. **内容创作模式**：输入文本内容，智能理解、生成文章
-2. **链接发布模式**：输入文章链接，下载、处理并发布
-3. **Markdown 转换**：内置 Markdown 到 HTML 转换，支持多主题
+### 模式A：完整创作流程
+
+```
+关键词/URL → AI生成 → HTML → 图片清洗 → 发布
+```
+
+1. **AI 内容生成**：基于关键词或链接智能生成文章
+2. **模板驱动创作**：内置开篇、结尾、语言风格模板
+3. **参数化配置**：支持长度、深度、风格等多维度配置
+
+### 模式B：直接发布流程
+
+```
+HTML/MD文件/链接 → 清洗 → 发布（跳过生成）
+```
+
+1. **链接发布模式**：下载文章链接，处理并发布
+2. **Markdown 转换**：内置 Markdown 到 HTML 转换，支持多主题
+3. **HTML 直接发布**：处理并发布现有 HTML 文件
 4. **图片处理**：自动下载、清洗元数据、符合微信规范
 5. **样式转换**：自动将 CSS 转为内联样式
 6. **一键发布**：支持 API（快速）和浏览器（可视化）两种方式
@@ -92,9 +122,9 @@ test -f "$HOME/.awesome-skills/wechat-article-maker/EXTEND.md" && echo "user"
 ┌────────────────────────────────────────────────────────────┬───────────────────┐
 │                            路径                            │       位置        │
 ├────────────────────────────────────────────────────────────┼───────────────────┤
-│ .awesome-skills/wechat-article-maker/EXTEND.md               │ 项目目录          │
+│ .awesome-skills/wechat-article-maker/EXTEND.md            │ 项目目录          │
 ├────────────────────────────────────────────────────────────┼───────────────────┤
-│ $HOME/.awesome-skills/wechat-article-maker/EXTEND.md         │ 用户主目录        │
+│ $HOME/.awesome-skills/wechat-article-maker/EXTEND.md      │ 用户主目录        │
 └────────────────────────────────────────────────────────────┴───────────────────┘
 
 ┌───────────┬───────────────────────────────────────────────────────────────────────────┐
@@ -109,21 +139,46 @@ test -f "$HOME/.awesome-skills/wechat-article-maker/EXTEND.md" && echo "user"
 
 ## 工作流程选择
 
-根据用户输入自动选择工作流程：
+根据用户输入**自动识别**并选择工作流程：
 
-| 输入类型 | 识别方式 | 工作流程 |
-|---------|---------|---------|
-| 纯文本内容 | 不包含链接 | 内容创作流程 |
-| 文本 + 参考链接 | 包含链接，但主体是文本描述 | 内容创作流程（含链接分析）|
-| 单个文章链接 | 仅包含 URL，或明确说"发布这篇文章" | 链接发布流程 |
-| Markdown 文件路径 | 以 `.md` 结尾的文件路径 | Markdown 转换发布流程 |
-| HTML 文件路径 | 以 `.html` 结尾的文件路径 | 直接发布流程 |
+| 输入类型 | 识别方式 | 工作流程 | 是否生成 |
+|---------|---------|---------|---------|
+| **文本内容** | 不包含链接，也不是文件路径 | 流程1：内容创作 | ✅ 需要生成 |
+| **文本 + 参考链接** | 包含链接，但主体是文本描述 | 流程1：内容创作（含链接分析）| ✅ 需要生成 |
+| **关键词** | 明确说"写一篇关于X的文章" | 流程1：内容创作 | ✅ 需要生成 |
+| **单个文章链接** | 仅包含 URL，或说"发布这篇文章" | 流程2：链接发布 | ❌ 跳过生成 |
+| **Markdown 文件** | 以 `.md` 结尾的文件路径 | 流程3：Markdown发布 | ❌ 跳过生成 |
+| **HTML 文件** | 以 `.html` 结尾的文件路径 | 流程4：HTML发布 | ❌ 跳过生成 |
+
+### 识别示例
+
+```
+用户输入                                    →  自动识别
+─────────────────────────────────────────────────────────────
+"写一篇关于 Docker 的文章"                   →  流程1（创作）
+"帮我生成一篇介绍 MCP 的技术文章"             →  流程1（创作）
+"https://blog.example.com/docker-tutorial"   →  流程2（链接发布）
+"发布这个链接到公众号：https://..."           →  流程2（链接发布）
+"./articles/my-article.md"                   →  流程3（MD发布）
+"发布 ./posts/tutorial.html"                 →  流程4（HTML发布）
+```
+
+### 用户显式指定
+
+如果自动识别不确定，使用 AskUserQuestion 确认：
+
+```
+header: "操作类型"
+选项：
+- 创作新文章 - 基于输入内容生成文章
+- 直接发布 - 跳过生成，直接处理并发布
+```
 
 ---
 
-## 流程 1: 内容创作与发布
+## 流程 1: 内容创作与发布（AI生成）
 
-当用户输入文本内容（可选包含参考链接）时使用此流程。
+当用户输入文本内容、关键词或带参考链接的内容时使用此流程。
 
 ### 创作进度清单
 
@@ -132,66 +187,57 @@ test -f "$HOME/.awesome-skills/wechat-article-maker/EXTEND.md" && echo "user"
 ```
 内容创作进度：
 - [ ] 步骤 0: 加载偏好设置
-- [ ] 步骤 1: 内容分析与链接提取
-- [ ] 步骤 2: 链接内容获取与理解
-- [ ] 步骤 3: 询问创作偏好
-- [ ] 步骤 4: 生成 Markdown 文章
-- [ ] 步骤 5: 用户确认与优化
-- [ ] 步骤 6: 转换为 HTML
-- [ ] 步骤 7: 准备封面图
-- [ ] 步骤 8: 发布到微信
-- [ ] 步骤 9: 完成报告
+- [ ] 步骤 1: 识别输入类型
+- [ ] 步骤 2: 信息收集（关键词/URL）
+- [ ] 步骤 3: 询问创作参数
+- [ ] 步骤 4: 选择结构模板
+- [ ] 步骤 5: 撰写开篇
+- [ ] 步骤 6: 撰写主体内容
+- [ ] 步骤 7: 撰写结尾
+- [ ] 步骤 8: 生成 HTML
+- [ ] 步骤 9: 质量检查
+- [ ] 步骤 10: 用户确认
+- [ ] 步骤 11: 图片处理与发布
+- [ ] 步骤 12: 完成报告
 ```
 
 ### 步骤 0: 加载偏好设置
 
 检查并加载 EXTEND.md 设置（见上方偏好设置部分）。
 
-### 步骤 1: 内容分析与链接提取
+### 步骤 1: 识别输入类型
 
-分析用户输入：
+根据输入内容判断：
 
-1. **提取所有链接**：
+1. **关键词输入**：用户说"写一篇关于X的文章"
+2. **URL 输入**：用户提供链接作为参考资料
+3. **文本内容**：用户提供具体的创作需求
 
-```bash
-# 提取 HTTP/HTTPS 链接
-echo "$user_input" | grep -oE 'https?://[^\s]+' > /tmp/links.txt
-```
+### 步骤 2: 信息收集
 
-2. **判断内容类型**：
-   - 如果仅有单个链接且无其他文本 → 转到**流程 2: 链接发布流程**
-   - 如果有文本内容（可选链接）→ 继续内容创作流程
+#### 如果是关键词（keyword）
 
-### 步骤 2: 链接内容获取与理解
+1. **使用 WebSearch 搜索关键词**，获取 3-5 篇高质量参考资料
+2. **收集信息**：
+   - 核心概念和定义
+   - 主要特性和功能
+   - 使用场景和案例
+   - 最佳实践和建议
+   - 常见问题和解决方案
 
-**如果内容中包含参考链接**：
+#### 如果是 URL 链接（url）
 
-1. **获取每个链接的内容**：
+1. **使用 WebFetch 读取 URL 内容**
+2. **提取**：
+   - 核心观点和主题
+   - 文章结构和逻辑
+   - 关键信息和数据
+   - 代码示例和案例
+3. **使用 WebSearch 补充背景知识**
 
-```typescript
-// 使用 WebFetch 获取并分析
-for (const url of links) {
-  const content = await WebFetch(url, `
-    请提取并总结以下信息：
-    1. 文章标题
-    2. 作者（如有）
-    3. 核心观点（3-5个要点）
-    4. 关键数据或案例
-    5. 可引用的金句
+### 步骤 3: 询问创作参数
 
-    以结构化格式返回，便于后续引用。
-  `);
-}
-```
-
-2. **整理参考资料**：
-   - 为每个链接创建摘要卡片
-   - 标注关键引用点
-   - 记录可用图片或数据
-
-### 步骤 3: 询问创作偏好
-
-使用 AskUserQuestion 询问用户偏好：
+使用 AskUserQuestion 询问：
 
 ```
 文章创作配置
@@ -199,31 +245,201 @@ for (const url of links) {
 问题1：文章风格
 header: "风格"
 选项：
-- 专业分析 - 深度解读，适合技术或行业分析（推荐）
-- 轻松科普 - 通俗易懂，适合大众读者
-- 教程指南 - 步骤清晰，适合实操性内容
-- 观点评论 - 表达看法，适合热点评论
+- guide（指南型）- 全面系统，多角度讲解（推荐）
+- tutorial（教程型）- 步骤清晰，循序渐进
+- analysis（分析型）- 深入透彻，对比分析
+- story（故事型）- 情境代入，经验分享
 
 问题2：文章长度
 header: "长度"
 选项：
-- 短文（800-1200字）- 快速阅读
-- 中等（1500-2500字）- 平衡深度与可读性（推荐）
-- 长文（3000字+）- 深度长文
+- short（2000-3000字）- 快速阅读
+- medium（3000-5000字）- 平衡深度与可读性（推荐）
+- long（5000-8000字）- 深度长文
 
-问题3：参考资料处理（如有链接）
-header: "引用方式"
+问题3：技术深度
+header: "深度"
 选项：
-- 深度引用和分析 - 详细解读原文观点（推荐）
-- 简要提及和链接 - 点到为止
-- 仅作背景参考 - 不明确引用
+- beginner（入门）- 多用比喻，减少术语
+- intermediate（中级）- 平衡理论与实践（推荐）
+- advanced（高级）- 深入细节，专业术语
+
+问题4：是否包含代码示例
+header: "代码"
+选项：
+- true - 包含可运行的代码示例
+- false - 仅文字描述
+
+问题5：是否进行网络调研
+header: "调研"
+选项：
+- true - 使用 WebSearch 调研关键词（推荐）
+- false - 仅基于已有知识生成
 ```
 
-### 步骤 4: 生成 Markdown 文章
+### 步骤 4: 选择结构模板
 
-基于用户输入、参考资料和偏好生成文章：
+根据 style 参数选择模板（详见 `templates/structure_guide.md`）：
 
-1. **标题生成要求**：
+**guide（指南型）- 最常用**：
+```markdown
+# [标题]
+
+[开篇引入 - 痛点场景]
+
+---
+
+## 什么是[X]?
+
+[概念介绍 + 比喻说明]
+
+---
+
+## [X]有什么厉害之处?
+
+### [特性1]
+[说明 + 实例]
+
+### [特性2]
+[说明 + 实例]
+
+### [特性3]
+[说明 + 实例]
+
+---
+
+## 怎么使用[X]?
+
+### [方式1]
+[详细说明 + 代码示例]
+
+### [方式2]
+[详细说明 + 代码示例]
+
+---
+
+## 实战案例
+
+### 案例一：[场景]
+[背景 + 问题 + 解决方案 + 效果]
+
+### 案例二：[场景]
+[背景 + 问题 + 解决方案 + 效果]
+
+---
+
+## [X]适合谁用?
+
+### 如果你是[角色1]
+[适用说明]
+
+### 如果你是[角色2]
+[适用说明]
+
+---
+
+## 写在最后
+
+[总结 + 金句 + 互动]
+```
+
+**tutorial（教程型）**：
+```markdown
+# [标题]
+
+[开篇引入 - 痛点场景]
+
+---
+
+## 准备工作
+
+[环境要求]
+[前置知识]
+[工具安装]
+
+---
+
+## 步骤一：[步骤名称]
+
+[详细说明]
+[代码示例]
+[注意事项]
+
+---
+
+## 步骤二：[步骤名称]
+
+[详细说明]
+[代码示例]
+[注意事项]
+
+---
+
+## 常见问题
+
+### 问题1：[问题描述]
+[解决方案]
+
+---
+
+## 写在最后
+
+[总结 + 行动号召 + 互动]
+```
+
+**analysis（分析型）**、**story（故事型）** 模板详见 `templates/structure_guide.md`
+
+### 步骤 5: 撰写开篇
+
+**必须遵循模板**（详见 `templates/opening_patterns.md`）：
+
+**标准开篇模式**：
+```markdown
+你有没有遇到过这种情况?
+
+[痛点1: 具体场景描述,用口语化表达]
+
+[痛点2: 具体场景描述,用口语化表达]
+
+[痛点3: 具体场景描述,用口语化表达]
+
+说实话,我之前也是这样。
+
+直到我发现了一个[解决方案]——**[主题]**。
+
+[一句话核心价值说明]。
+```
+
+**开篇要求**：
+- 必须使用"你有没有遇到过这种情况?"
+- 列举 2-3 个痛点（具体场景，不是抽象描述）
+- 必须包含"说实话，我之前也是这样"
+- 开篇长度：100-150字
+
+### 步骤 6: 撰写主体内容
+
+**语言风格要求**（详见 `templates/language_rules.md`）：
+
+1. **口语化表达**（必须）：
+   - 使用"说实话"、"其实"、"简单来说"
+   - 使用"你"、"我"第一第二人称
+   - 短句为主，每句不超过 30 字
+
+2. **比喻和类比**（至少 3 个）：
+   - "就像..."、"好比..."
+   - 用日常生活事物比喻技术概念
+
+3. **反问句和疑问句**（适当使用）
+
+4. **表情符号**（每段不超过 2 个）：
+   - ✅ ❌ 🔧 💡 🔍 ⚠️
+
+**段落撰写规范**：
+- 每段 3-5 行，避免大段文字
+- 重要数据单独成段并加粗
+- 金句单独成段，控制在 20 字以内
+
+**标题生成规范**：
 
 文章标题必须包含以下 5 个特点中的至少 3 个：
 
@@ -235,94 +451,156 @@ header: "引用方式"
 | **情绪调动** | 激发好奇心、紧迫感或共鸣 | 《千万别再这样写代码了！后果很严重》 |
 | **悬念设置** | 制造悬念引发点击欲望 | 《99% 的程序员都不知道的调试技巧》 |
 
-**标题公式参考**：
-- 痛点 + 数字 + 结果：《花了 100 小时排错？这 3 个技巧让你秒定位 Bug》
-- 数字 + 悬念：《7 个隐秘的 VS Code 功能，第 5 个太绝了》
-- 情绪 + 痛点：《别再犯这个低级错误！新手程序员最常踩的 5 个坑》
+### 步骤 7: 撰写结尾
 
-2. **排版规范**：
+**必须遵循模板**（详见 `templates/closing_patterns.md`）：
 
-**段落结构**：
-- 每段控制在 3-5 行，避免大段文字
-- 重要数据单独成段并加粗
-- 关键结论前置，细节后置
-
-**配图位置**：
-- 标题下方放置封面图
-- 每个步骤/章节后放置效果示意图
-- 结尾放置总结图或行动号召图
-
-**代码块**：
-- 代码块前后留白（空行分隔）
-- 必须使用语法高亮标注语言类型
-- 关键行添加注释说明
-
-**金句设计**：
-- 核心观点单独成段
-- 使用加粗或引用格式突出
-- 控制在 20 字以内，便于记忆和传播
-
-3. **文章结构**：
-
+**标准结尾模式**：
 ```markdown
+## 写在最后
+
+[总结要点,2-3句]
+
+[价值提炼,1-2句]
+
+> [金句,一句话朗朗上口]
+
 ---
-title: 文章标题（遵循 5 大标题原则）
-author: 作者名（从 EXTEND.md 或默认值）
-summary: 文章摘要（120字以内，突出核心价值）
-featureImage: 封面图路径（可选）
-date: YYYY-MM-DD
----
 
-# 文章标题（痛点明确 + 数字吸引 + 结果导向）
+💬 **[互动问题]?**
 
-![封面图](cover.jpg)
+评论区聊聊~
 
-引言段落，2-3行即可，
-直接点明读者能获得什么价值。
-
-## 第一部分：核心问题
-
-（3-5行，聚焦痛点）
-
-**关键数据单独成段加粗**
-
-配合说明文字，3-4行即可。
-
-![步骤效果图](step1.jpg)
-
-## 第二部分：解决方案
-
-分段讲解，每段 3-5 行。
-
-```python
-# 代码块前后留白
-# 标注语言类型实现语法高亮
-def solution():
-    return "success"
+如果这篇文章对你有帮助,点个**在看**让更多人看到吧 👇
 ```
 
-> **金句：核心观点单独成段，增强记忆点**
+**结尾要求**：
+- 必须有"## 写在最后"标题
+- 总结不超过 150 字
+- 金句朗朗上口，不超过 20 字
+- 必须有互动问题
+- 必须有点赞在看号召
 
-![效果对比图](step2.jpg)
+### 步骤 8: 生成 HTML
 
-## 第三部分：实战案例
+输出完整的 HTML 文档，包含内联 CSS 样式（参考 `styles/base_style.css`）：
 
-具体步骤 + 效果图，
-让读者有代入感。
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[文章标题]</title>
+    <style>
+        body {
+            font-family: Optima, "Microsoft YaHei", PingFangSC-regular, serif;
+            font-size: 16px;
+            line-height: 1.8;
+            color: rgb(89, 89, 89);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-## 总结
+        h1 {
+            font-size: 24px;
+            color: rgba(53, 179, 120, 1);
+            font-weight: bold;
+            margin: 30px 0 15px;
+        }
 
-简洁有力的结论，2-3 行。
+        h2 {
+            font-size: 18px;
+            color: rgb(255, 255, 255);
+            background: rgb(0, 0, 0);
+            padding: 2px 10px;
+            font-weight: bold;
+            margin: 30px 0 15px;
+        }
 
-![总结图](summary.jpg)
+        h3 {
+            font-size: 20px;
+            color: rgb(53, 179, 120);
+            font-weight: bold;
+            margin: 30px 0 15px;
+        }
 
----
+        strong {
+            color: rgb(53, 179, 120);
+            font-weight: bold;
+        }
 
-**参考资料**：
-- [文章标题](链接)
+        blockquote {
+            margin: 20px 0;
+            padding: 10px 10px 10px 20px;
+            border-left: 3px solid rgb(53, 179, 120);
+            background: rgb(251, 249, 253);
+        }
+
+        code {
+            font-family: Consolas, Monaco, Menlo, monospace;
+            font-size: 14px;
+            background: rgba(27, 31, 35, 0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: rgba(30, 107, 184, 1);
+        }
+
+        pre {
+            background: #282c34;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: #abb2bf;
+        }
+    </style>
+</head>
+<body>
+
+[文章内容,转为HTML标签]
+
+</body>
+</html>
 ```
 
-2. **保存文件**：
+### 步骤 9: 质量检查
+
+**内容检查**：
+- [ ] 文章长度符合 length 参数要求
+- [ ] 技术深度符合 depth 参数定位
+- [ ] 文章结构符合 style 参数模板
+- [ ] 所有技术概念准确无误
+
+**风格检查**：
+- [ ] 开篇使用痛点引入模式
+- [ ] 包含"说实话"等口语化表达
+- [ ] 使用第一人称"我"
+- [ ] 包含至少 3 个比喻或类比
+- [ ] 结尾有金句和互动
+- [ ] 表情符号使用恰当（每段≤2个）
+
+**格式检查**：
+- [ ] H2 标题使用正确（黑底白字）
+- [ ] 代码示例有注释说明
+- [ ] 图片有 alt 文本和说明
+- [ ] HTML 格式完整
+- [ ] CSS 样式完整
+
+**可读性检查**：
+- [ ] 句子简短（每句≤30字）
+- [ ] 段落清晰，主题明确
+- [ ] 逻辑连贯，前后一致
+
+### 步骤 10: 保存文件与用户确认
+
+1. **保存 HTML 文件**：
 
 ```bash
 # 生成 slug（文件名）
@@ -337,261 +615,80 @@ slug=$(echo "$title" | \
 # 创建目录并保存
 output_dir="wechat-articles/$(date +%Y-%m-%d)"
 mkdir -p "$output_dir"
-echo "$article_content" > "$output_dir/$slug.md"
+echo "$html_content" > "$output_dir/$slug.html"
 ```
 
-3. **展示给用户**：
+2. **询问用户下一步**：
+
+使用 AskUserQuestion：
 
 ```
-✓ 文章已生成
-
-📄 标题：$title
-📏 长度：约 $word_count 字
-📁 保存位置：$output_dir/$slug.md
-
-[文章预览内容...]
-
-请选择下一步操作...
-```
-
-### 步骤 5: 用户确认与优化
-
-使用 AskUserQuestion 询问：
-
-```
-文章已生成，请选择操作
-
 header: "下一步"
 选项：
-- 直接发布 - 转换为 HTML 并发布到微信（推荐）
+- 直接发布 - 转换为微信格式并发布（推荐）
 - 修改内容 - 说明需要调整的部分
-- 重新生成 - 使用不同风格或角度
 - 仅保存文件 - 不发布，稍后手动处理
 ```
 
-**如果用户选择修改**：
-1. 收集修改意见
-2. 更新文章内容
-3. 重新保存并展示
-4. 再次询问下一步
+### 步骤 11: 图片处理与发布
 
-**如果用户选择重新生成**：
-- 返回步骤 3，重新询问偏好
-- 使用不同的创作角度
+**如果用户选择直接发布**：
 
-### 步骤 6: 转换为 HTML
+1. **处理图片**：
+   - 自动下载 HTML 中的远程图片
+   - 清洗图片元数据（使用 sharp）
+   - 上传到微信素材库
 
-使用内置的 Markdown 渲染引擎转换：
+2. **CSS 内联转换**（如需要）：
+   ```bash
+   npx -y bun "${SKILL_DIR}/scripts/wechat-api.ts" \
+     "$output_dir/$slug.html" \
+     --inline-css
+   ```
 
-1. **询问主题**（如未在 EXTEND.md 中指定）：
+3. **准备封面图**（强制规则）：
+   - 优先级 1：显式指定（frontmatter 中的 featureImage/coverImage）
+   - 优先级 2：自动提取文章中第一张图片
+   - 优先级 3：自动生成（AI 或脚本）
 
-| 主题 | 描述 |
-|------|------|
-| `default` | 经典主题 - 传统排版，标题居中带底边，二级标题白字彩底 |
-| `grace` | 优雅主题 - 文字阴影，圆角卡片，精致引用块（推荐）|
-| `simple` | 简洁主题 - 现代极简风，不对称圆角，清爽留白 |
+4. **发布到微信**：
+   - API 方式（推荐）
+   - 浏览器方式
 
-2. **执行转换**：
-
-```bash
-npx -y bun "${SKILL_DIR}/scripts/md-to-wechat.ts" \
-  "$output_dir/$slug.md" \
-  --theme grace \
-  --output "$output_dir"
-```
-
-3. **解析输出 JSON**：
-
-```json
-{
-  "title": "文章标题",
-  "author": "作者",
-  "summary": "摘要",
-  "htmlPath": "路径/to/article.html",
-  "contentImages": [
-    {
-      "placeholder": "WECHATIMGPH_1",
-      "localPath": "/path/to/image1.jpg",
-      "originalPath": "原始路径"
-    }
-  ]
-}
-```
-
-### 步骤 7: 准备封面图
-
-**封面图强制规则**（优先级顺序）：
-
-1. **显式指定**：检查 Frontmatter 字段（`featureImage`, `coverImage`, `cover`, `image`）。
-2. **自动首图回退**：若未显式指定封面，且文章中包含图片，**必须**自动提取并使用文章中的第一张图片作为封面。
-3. **自动生成**：**只有**在文章中完全没有图片时，才触发封面图生成逻辑。
-
-**如果没有指定且文章内无图片**，询问用户：
-
-```
-封面图设置（文章中未发现图片）
-
-header: "封面来源"
-选项：
-- 自动生成 - 基于文章标题生成渐变背景封面（推荐）
-- 提供路径 - 指定本地文件或 URL
-- 暂不设置 - 稍后手动添加
-```
-
-**如果选择自动生成**：
-
-1. **优先尝试多模态大模型生成**（如果 Agent 支持）：
-   - 如果当前 Agent 环境具备文生图能力（Text-to-Image），请根据文章标题和摘要生成一张高质量的封面图。
-   - 要求：2:1 比例（如 1024x512），风格现代、简洁，适合作为公众号封面。
-   - 保存为：`$output_dir/$slug-cover.jpg`
-   - **注意**：如果 Agent 无法生成图片（例如无工具支持），则直接使用下方降级方案。
-
-2. **降级方案（使用脚本生成）**：
-
-   如果无法使用大模型生成图片，则运行以下命令生成渐变背景文字封面：
-
-```bash
-# 使用 Node.js 脚本生成（无系统依赖）
-npx -y bun "${SKILL_DIR}/scripts/generate-cover.ts" \
-  --title "$title" \
-  --output "$output_dir/$slug-cover.jpg" \
-  --gradient-start "#667eea" \
-  --gradient-end "#764ba2"
-```
-
-**封面要求**：
-- 格式：JPEG, PNG, GIF 或 WebP
-- 推荐尺寸：900x500px（2:1 比例）
-- 文件大小：< 2MB
-
-### 步骤 8: 发布到微信
-
-询问发布方式：
-
-```
-发布方式选择
-
-header: "发布方法"
-选项：
-- API 方式 - 快速发布，需要 API 凭证（推荐）
-- 浏览器方式 - 可视化操作，需要 Chrome
-- 仅输出 HTML - 保存文件，稍后手动发布
-```
-
-#### 选项 A: API 方式发布
-
-1. **检查 API 凭证**：
-
-```bash
-# 检查项目级别
-test -f .awesome-skills/.env && grep -q "WECHAT_APP_ID" .awesome-skills/.env && echo "project"
-
-# 检查用户级别
-test -f "$HOME/.awesome-skills/.env" && grep -q "WECHAT_APP_ID" "$HOME/.awesome-skills/.env" && echo "user"
-```
-
-2. **如果凭证缺失**，引导设置：
-
-```
-微信 API 凭证未找到
-
-获取凭证步骤：
-1. 访问 https://mp.weixin.qq.com
-2. 进入：开发 → 基本配置
-3. 复制 AppID 和 AppSecret
-
-保存位置？
-A) 项目级别：.awesome-skills/.env（仅此项目）
-B) 用户级别：~/.awesome-skills/.env（所有项目）
-```
-
-创建 `.env` 文件：
-
-```bash
-WECHAT_APP_ID=<用户输入>
-WECHAT_APP_SECRET=<用户输入>
-```
-
-3. **执行发布**：
-
-```bash
-npx -y bun "${SKILL_DIR}/scripts/wechat-api.ts" \
-  "$output_dir/$slug.html" \
-  --title "$title" \
-  --summary "$summary" \
-  --cover "$cover_image" \
-  --inline-css
-```
-
-**重要**：`--inline-css` 参数将 CSS 转为内联样式，微信公众号不支持 `<style>` 标签。
-
-#### 选项 B: 浏览器方式发布
-
-```bash
-npx -y bun "${SKILL_DIR}/scripts/wechat-article.ts" \
-  --html "$output_dir/$slug.html" \
-  --title "$title" \
-  --summary "$summary"
-```
-
-**首次运行**：会打开 Chrome 浏览器，需要扫码登录微信公众号。
-
-#### 选项 C: 仅输出 HTML
-
-```bash
-echo "✓ HTML 文件已保存至：$output_dir/$slug.html"
-echo ""
-echo "文件包含："
-echo "• 内联样式（符合微信规范）"
-echo "• 完整的文章内容"
-echo "• 本地图片路径"
-```
-
-### 步骤 9: 完成报告
-
-发布成功后，显示摘要：
+### 步骤 12: 完成报告
 
 ```
 ✓ 微信公众号文章创作与发布完成！
 
 创作信息：
-• 输入：用户文本内容
-• 参考链接：$link_count 个
-• 文章风格：$style
-• 文章长度：$word_count 字
+• 输入类型：关键词/URL
+• 文章风格：guide
+• 文章长度：3500字
+• 技术深度：intermediate
 
 发布信息：
-• 标题：$title
-• 作者：$author
-• 摘要：$summary
-• 主题：$theme
-• 图片：$image_count 张
-• 封面：$cover_source
-
-发布方式：API / 浏览器
+• 标题：[标题]
+• 封面：自动生成
+• 图片：3张（已清洗）
 
 结果：
 ✓ 草稿已保存到微信公众号
-• media_id: $media_id
+• media_id: [ID]
 
 下一步：
-→ 管理草稿：https://mp.weixin.qq.com（登录后进入「内容管理」→「草稿箱」）
+→ 管理草稿：https://mp.weixin.qq.com
 
 生成的文件：
-• $output_dir/$slug.md（Markdown 源文件）
 • $output_dir/$slug.html（HTML 文件）
-• $output_dir/$slug-cover.jpg（封面图）
 ```
 
 ---
 
-## 流程 2: 链接文章发布
+## 流程 2: 链接文章发布（直接发布）
 
-当用户输入单个文章链接时使用此流程。
+当用户提供单个文章链接时，**跳过生成阶段**，直接下载、清洗、发布。
 
 ### 发布进度清单
-
-复制此清单并在完成时勾选：
 
 ```
 链接发布进度：
@@ -606,253 +703,17 @@ echo "• 本地图片路径"
 - [ ] 步骤 8: 完成报告
 ```
 
-### 步骤 0: 加载偏好设置
+**无生成步骤**：直接处理原始内容并发布。
 
-检查并加载 EXTEND.md 设置。
+### 详细步骤
 
-### 步骤 1: 链接验证
-
-验证链接可访问性：
-
-```bash
-# 检查链接状态
-status_code=$(curl -sI -w "%{http_code}" -o /dev/null "$url")
-if [ "$status_code" = "200" ]; then
-  echo "链接有效"
-else
-  echo "链接无法访问，状态码: $status_code"
-fi
-```
-
-### 步骤 2: 文章下载与解析
-
-使用 WebFetch 获取文章内容：
-
-```typescript
-const article = await WebFetch(url, `
-请提取以下信息并以 JSON 格式返回：
-
-{
-  "title": "文章标题",
-  "author": "作者（如果有）",
-  "summary": "文章摘要或简介（120字以内）",
-  "content": "HTML 格式的正文内容，保留原始样式和结构",
-  "images": ["图片URL数组"],
-  "featureImage": "封面图URL（如果有）",
-  "publishDate": "发布日期（如果有）"
-}
-
-注意：
-- content 需要包含完整的 HTML 标签和样式
-- images 包含文章中所有的图片URL
-- 保留原文的段落、标题、列表等结构
-`);
-```
-
-### 步骤 3: 图片下载与清洗
-
-1. **创建临时目录**：
-
-```bash
-temp_dir="wechat-temp/$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$temp_dir/images"
-```
-
-2. **下载所有图片**：
-
-```bash
-# 解析图片URL数组并下载
-image_index=1
-for img_url in "${images[@]}"; do
-  # 获取文件扩展名
-  ext="${img_url##*.}"
-  ext="${ext%%\?*}"  # 移除URL参数
-
-  # 下载图片
-  output_file="$temp_dir/images/image_${image_index}.${ext}"
-  curl -L -o "$output_file" "$img_url" 2>/dev/null
-
-  image_index=$((image_index + 1))
-done
-```
-
-3. **图片元数据清洗**：
-
-脚本 `wechat-api.ts` 会自动执行以下清洗：
-
-- **检测 JPEG 图片**中的非标准元数据
-- **清除 AIGC/Coze 标记**（微信不支持）
-- **保留有效的 EXIF 数据**和图像内容
-- **自动重试**：如果上传失败（错误码 40113），强制清洗后重试
-
-算法（参考 `scripts/wechat-api.ts:105-180`）：
-
-```typescript
-function cleanImageMetadata(buffer: Buffer): Buffer {
-  // 检查 JPEG 签名
-  if (buffer[0] !== 0xff || buffer[1] !== 0xd8) return buffer;
-
-  // 检测 AIGC 标记
-  const headerStr = buffer.slice(0, 2048).toString('binary');
-  const hasAigcMarker = headerStr.includes('AIGC{') || headerStr.includes('Coze');
-
-  if (!hasAigcMarker) return buffer;
-
-  // 跳过非标准 APP 段（0xeb, 0xec 等）
-  // 保留标准段（APP0-APP9, DQT, SOF 等）
-  // 返回清洗后的 buffer
-}
-```
-
-### 步骤 4: 样式转换（CSS 内联）
-
-**关键步骤**：微信公众号不支持 `<style>` 标签，必须将 CSS 转为内联样式。
-
-1. **保存原始 HTML**：
-
-```bash
-echo "$html_content" > "$temp_dir/original.html"
-```
-
-2. **执行 CSS 内联转换**：
-
-```bash
-# 使用 wechat-api.ts 的内联转换功能
-# 注意：这里先生成处理后的 HTML，不立即发布
-npx -y bun "${SKILL_DIR}/scripts/wechat-api.ts" \
-  "$temp_dir/original.html" \
-  --inline-css \
-  --output "$temp_dir/processed.html" \
-  --dry-run
-```
-
-3. **替换图片路径**：
-
-```bash
-# 将远程图片URL替换为本地路径
-for i in {1..${#images[@]}}; do
-  sed -i "s|${images[$i-1]}|$temp_dir/images/image_$i.jpg|g" "$temp_dir/processed.html"
-done
-```
-
-### 步骤 5: 用户确认
-
-展示处理结果并询问：
-
-```
-文章处理完成
-
-📄 标题：$title
-✍️ 作者：$author
-📝 摘要：$summary
-🌐 原文：$original_url
-🖼️ 图片：共 $image_count 张（已下载并清洗元数据）
-🎨 样式：已转换为内联样式（符合微信规范）
-
-HTML 已保存至：$temp_dir/processed.html
-
-请选择操作
-```
-
-使用 AskUserQuestion：
-
-```
-header: "发布选项"
-选项：
-- 直接发布（API）- 快速发布到草稿箱（推荐）
-- 浏览器发布 - 打开浏览器可视化操作
-- 仅输出 HTML - 保存文件，稍后手动处理
-- 取消 - 不保存
-```
-
-### 步骤 6: 准备封面图
-
-与流程 1 的步骤 7 相同，**遵循封面图强制规则**：
-
-1. 优先使用原文提取的 `featureImage`。
-2. 若无显式封面，自动使用下载图片中的第一张作为封面。
-3. 仅在原文完全没有图片时，才询问生成封面。
-
-### 步骤 7: 执行发布
-
-根据用户选择执行：
-
-#### 选项 A: 直接发布（API）
-
-```bash
-npx -y bun "${SKILL_DIR}/scripts/wechat-api.ts" \
-  "$temp_dir/processed.html" \
-  --title "$title" \
-  --summary "$summary" \
-  --cover "$cover_image" \
-  --inline-css
-```
-
-**API 方式特性**：
-- ✓ 自动下载远程图片
-- ✓ 自动清洗图片元数据（AIGC/Coze 标记）
-- ✓ 如果上传失败（40113），强制清洗后重试
-- ✓ 支持格式：JPEG, PNG, GIF, WebP
-
-#### 选项 B: 浏览器发布
-
-```bash
-npx -y bun "${SKILL_DIR}/scripts/wechat-article.ts" \
-  --html "$temp_dir/processed.html" \
-  --title "$title" \
-  --summary "$summary"
-```
-
-#### 选项 C: 仅输出 HTML
-
-```bash
-# 复制到永久位置
-output_path="wechat-articles/$(date +%Y-%m-%d)/$slug.html"
-mkdir -p "$(dirname "$output_path")"
-cp "$temp_dir/processed.html" "$output_path"
-cp -r "$temp_dir/images" "$(dirname "$output_path")/"
-
-echo "✓ HTML 已保存至：$output_path"
-echo "✓ 图片已保存至：$(dirname "$output_path")/images/"
-```
-
-### 步骤 8: 完成报告
-
-```
-✓ 链接文章发布完成！
-
-原文信息：
-• 链接：$original_url
-• 标题：$title
-• 作者：$author
-
-处理信息：
-• 下载并转换 HTML
-• 清洗 $image_count 张图片元数据
-• 转换样式为内联格式
-• 生成封面图：$cover_source
-
-发布信息：
-• 方式：API / 浏览器
-• 主题：保留原样式
-• 状态：✓ 草稿已保存
-
-结果：
-• media_id: $media_id
-
-下一步：
-→ 管理草稿：https://mp.weixin.qq.com（登录后进入「内容管理」→「草稿箱」）
-
-生成的文件：
-• $output_path（处理后的 HTML）
-• $(dirname "$output_path")/images/（清洗后的图片）
-```
+参考原 SKILL.md 流程2（保持不变，从第588行开始）。
 
 ---
 
-## 流程 3: Markdown 文件发布
+## 流程 3: Markdown 文件发布（直接发布）
 
-当用户提供 `.md` 文件路径时使用此流程。
+当用户提供 `.md` 文件时，**跳过生成阶段**，直接渲染、处理、发布。
 
 ### 快速发布
 
@@ -875,13 +736,15 @@ npx -y bun "${SKILL_DIR}/scripts/wechat-api.ts" \
 1. **解析 Markdown**：提取 frontmatter（title, author, summary 等）
 2. **转换为 HTML**：应用主题样式
 3. **处理图片**：下载远程图片，替换为本地路径
-4. **发布**：同流程 1 的步骤 8
+4. **发布**：同流程 1 的步骤 11
+
+**无生成步骤**：直接渲染并发布。
 
 ---
 
 ## 流程 4: HTML 文件直接发布
 
-当用户提供 `.html` 文件路径时使用此流程。
+当用户提供 `.html` 文件时，**跳过所有处理阶段**，直接发布。
 
 ### 快速发布
 
@@ -896,6 +759,8 @@ npx -y bun "${SKILL_DIR}/scripts/wechat-api.ts" \
 ```
 
 **注意**：必须使用 `--inline-css` 参数，否则样式会丢失。
+
+**无生成步骤**：直接发布。
 
 ---
 
@@ -920,18 +785,72 @@ npx -y bun "${SKILL_DIR}/scripts/wechat-browser.ts" \
   --submit
 ```
 
-### 参数说明
-
-| 参数 | 描述 |
-|------|------|
-| `--markdown <path>` | Markdown 文件 |
-| `--title <text>` | 标题 |
-| `--content <text>` | 内容文字 |
-| `--image <path>` | 图片路径（可多次使用）|
-| `--images <dir>` | 图片目录 |
-| `--submit` | 自动提交 |
-
 详见：[references/image-text-posting.md](references/image-text-posting.md)
+
+---
+
+## 模板库
+
+本技能内置完整的文章创作模板库，位于 `templates/` 目录。
+
+### 开篇模式库
+
+文件：`templates/opening_patterns.md`
+
+包含 4 种开篇模式：
+1. **痛点场景引入**（最常用）- 适用于工具介绍、问题解决
+2. **对比式引入** - 适用于对比、优化类文章
+3. **提问式引入** - 适用于功能介绍、新特性发布
+4. **故事式引入** - 适用于案例分析、经验分享
+
+### 结尾模式库
+
+文件：`templates/closing_patterns.md`
+
+包含 4 种结尾模式：
+1. **价值总结型**（最常用）- 总结 + 金句 + 互动
+2. **行动号召型** - 强调实践和行动
+3. **展望未来型** - 趋势分析、未来展望
+4. **要点提炼型** - 知识密集型文章，帮助记忆
+
+### 语言风格规则
+
+文件：`templates/language_rules.md`
+
+核心原则：
+- 口语化优先（使用"说实话"、"其实"等）
+- 第一人称叙述（建立情感连接）
+- 大量比喻和类比（降低理解门槛）
+- 反问句和疑问句（增强互动性）
+- 适当表情符号（每段不超过 2 个）
+
+### 结构模板
+
+文件：`templates/structure_guide.md`
+
+包含 4 种文章结构的详细模板：
+- guide（指南型）
+- tutorial（教程型）
+- analysis（分析型）
+- story（故事型）
+
+### 样式文件
+
+文件：`styles/base_style.css`
+
+定义文章的统一样式：
+- 主色调：#35B378（绿色）
+- H1：绿色 24px 加粗
+- H2：黑底白字 18px
+- H3：绿色 20px 加粗
+- 正文：15px 深灰，行高 1.8
+
+### 示例文章
+
+位于 `examples/` 目录：
+- `beginner_article.html` - 入门深度示例
+- `intermediate_article.html` - 中级深度示例
+- `advanced_article.html` - 高级深度示例
 
 ---
 
@@ -1000,7 +919,7 @@ WECHAT_BROWSER_CHROME_PATH=/path/to/chrome  # 自定义 Chrome 路径
 
 - 主题：grace
 - 发布方式：api
-- 作者：宝玉
+- 作者：AI爱好者
 - Chrome 配置文件：~/.chrome-wechat
 
 ## 自动操作
@@ -1008,12 +927,6 @@ WECHAT_BROWSER_CHROME_PATH=/path/to/chrome  # 自定义 Chrome 路径
 - 自动生成封面：true
 - 自动清洗图片：true
 - 自动内联样式：true
-
-## 创作偏好
-
-- 默认文章风格：专业分析
-- 默认文章长度：中等（1500-2500字）
-- 默认引用方式：深度引用和分析
 ```
 
 ---
@@ -1046,12 +959,6 @@ WECHAT_BROWSER_CHROME_PATH=/path/to/chrome  # 自定义 Chrome 路径
 3. **自动降级**：sharp 不可用时，使用手动解析作为后备方案
 4. **尺寸优化**：自动调整超大图片（限制 1920x1080）以符合微信规范
 
-```typescript
-// 图片处理流程
-const result = await cleanImage(buffer, forceClean);
-// 返回: { buffer, wasCleaned, method: "sharp"|"manual"|"none", originalSize, cleanedSize }
-```
-
 **双引擎清理策略**：
 
 | 方法 | 优先级 | 说明 |
@@ -1075,7 +982,7 @@ try {
 
 ### CSS 内联转换
 
-使用 `juice` 或类似库将 CSS 规则转换为内联样式：
+使用 `juice` 库将 CSS 规则转换为内联样式：
 
 **之前**：
 ```html
@@ -1096,7 +1003,7 @@ try {
 
 **方式 1: 多模态大模型生成（推荐）**
 
-如果 Agent 具备文生图能力，优先根据文章内容生成定制化封面图。这能提供更具吸引力和相关性的视觉效果。
+如果 Agent 具备文生图能力，优先根据文章内容生成定制化封面图。
 
 **方式 2: 纯 Node.js（无系统依赖）**
 
@@ -1107,9 +1014,7 @@ npx -y bun "${SKILL_DIR}/scripts/generate-cover.ts" \
   --title "文章标题" \
   --output cover.jpg \
   --gradient-start "#667eea" \
-  --gradient-end "#764ba2" \
-  --width 900 \
-  --height 500
+  --gradient-end "#764ba2"
 ```
 
 特性：
@@ -1119,21 +1024,24 @@ npx -y bun "${SKILL_DIR}/scripts/generate-cover.ts" \
 - ✓ 可自定义颜色和尺寸
 - ✓ 跨平台（Node.js/Bun）
 
-**方式 2: ImageMagick（如已安装）**
+---
 
-```bash
-convert -size 900x500 \
-  -define gradient:angle=135 \
-  gradient:'#667eea'-'#764ba2' \
-  -gravity center \
-  -font "DejaVu-Sans-Bold" \
-  -pointsize 48 \
-  -fill white \
-  -annotate +0-30 "标题第一行" \
-  -pointsize 36 \
-  -annotate +0+30 "标题第二行" \
-  cover.jpg
-```
+## 功能对比
+
+| 功能 | 流程1: 内容创作 | 流程2: 链接发布 | 流程3: MD发布 | 流程4: HTML发布 | 图文发布 |
+|------|---------------|---------------|--------------|---------------|---------|
+| **输入类型** | 文本/关键词/URL | 单个链接 | .md 文件 | .html 文件 | 短文+图片 |
+| **是否生成** | ✅ 是 | ❌ 否 | ❌ 否 | ❌ 否 | ❌ 否 |
+| **AI创作** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **内容理解** | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Markdown转换** | ✅ | ❌ | ✅ | ❌ | ✅ |
+| **主题样式** | ✅ generator样式 | 保留原样 | ✅ 3种主题 | 保留原样 | ❌ |
+| **图片清洗** | ✅ | ✅ | ✅ | ✅ | ❌ |
+| **CSS内联** | ✅ | ✅ | ✅ | ✅ | ❌ |
+| **封面生成** | ✅ | ✅ | ✅ | ✅ | ❌ |
+| **API发布** | ✅ | ✅ | ✅ | ✅ | ❌ |
+| **浏览器发布** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **适用场景** | 原创内容 | 转载/分享 | 本地文章 | 现成HTML | 图片展示 |
 
 ---
 
@@ -1163,7 +1071,7 @@ convert -size 900x500 \
 - ✓ 提供清晰的创作意图和目标读者
 - ✓ 引用链接时说明如何使用（深度分析 vs 简要提及）
 - ✓ 预览后再发布，避免返工
-- ✓ 保存 Markdown 源文件，便于后续修改
+- ✓ 保存源文件，便于后续修改
 - ✓ **标题必须包含至少 3 个特点**：痛点明确、数字吸引、结果导向、情绪调动、悬念设置
 - ✓ **段落控制 3-5 行**，重要数据单独成段加粗
 - ✓ **金句单独成段**，控制在 20 字以内，便于传播
@@ -1197,154 +1105,59 @@ convert -size 900x500 \
 - ✓ 文件大小控制在 1MB 以内
 - ✓ 如有 AIGC 图片，让脚本自动清洗
 
-### 6. 排版与可读性
-
-**段落结构**：
-- ✓ 每段 3-5 行，避免视觉疲劳
-- ✓ 重要数据/结论单独成段并加粗
-- ✓ 复杂内容分点说明，不要堆砌
-
-**配图策略**：
-- ✓ 标题下方必放封面图
-- ✓ 关键步骤后放置效果图/示意图
-- ✓ 文章结尾放置总结图或 CTA 图
-
-**代码展示**：
-- ✓ 代码块前后留空行
-- ✓ 必须标注编程语言实现语法高亮
-- ✓ 关键行添加注释，辅助理解
-
-**金句设计**：
-- ✓ 核心观点提炼成金句，单独成段
-- ✓ 使用 `**加粗**` 或 `> 引用` 突出
-- ✓ 长度控制在 20 字内，朗朗上口
-
----
-
-## 功能对比
-
-| 功能 | 内容创作 | 链接发布 | Markdown 发布 | HTML 发布 | 图文发布 |
-|------|---------|---------|--------------|----------|---------|
-| 输入类型 | 文本 + 链接 | 单个链接 | .md 文件 | .html 文件 | 短文 + 图片 |
-| 内容理解 | ✓ | ✓ | ✗ | ✗ | ✗ |
-| 文章生成 | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Markdown 转换 | ✓ | ✗ | ✓ | ✗ | ✓ |
-| 主题样式 | ✓ | 保留原样 | ✓ | 保留原样 | ✗ |
-| 图片清洗 | ✓ | ✓ | ✓ | ✓ | ✗ |
-| CSS 内联 | ✓ | ✓ | ✓ | ✓ | ✗ |
-| 封面生成 | ✓ | ✓ | ✓ | ✓ | ✗ |
-| API 发布 | ✓ | ✓ | ✓ | ✓ | ✗ |
-| 浏览器发布 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| 适用场景 | 原创内容 | 转载/分享 | 本地文章 | 现成 HTML | 图片展示 |
-
 ---
 
 ## 使用示例
 
-### 示例 1: 创作新文章（纯文本）
+### 示例 1: 创作新文章（需要生成）
 
 ```
-用户：创作一篇关于 AI 编程助手发展趋势的文章
+用户：创作一篇关于 Docker 容器化的文章
 
 Agent：
-✓ 分析内容类型 → 纯文本创作模式
-✓ 询问文章风格、长度 → 用户选择"专业分析"、"中等"
-✓ 生成文章并展示
-✓ 用户确认后转换为 HTML（grace 主题）
-✓ 自动生成封面图
-✓ 使用 API 发布到草稿箱
+✓ 识别为内容创作模式
+✓ WebSearch 调研关键词
+✓ 询问参数
+✓ 生成 3500 字文章（guide风格，中级深度）
+✓ 转换为 HTML
+✓ 清洗图片
+✓ 发布到微信
 
-结果：
-• 文章保存至 wechat-articles/2026-02-09/ai-coding-assistant-trends.md
-• HTML 输出至 wechat-articles/2026-02-09/ai-coding-assistant-trends.html
-• 封面图：wechat-articles/2026-02-09/ai-coding-assistant-trends-cover.jpg
-• 微信草稿箱 media_id: abc123...
+结果：草稿已保存（media_id: abc123...）
 ```
 
-### 示例 2: 基于链接创作
+### 示例 2: 发布链接文章（跳过生成）
 
 ```
-用户：基于这篇文章创作一篇公众号文章，深度分析其中的观点：
-https://example.com/ai-future
-
-Agent：
-✓ 提取链接并获取内容
-✓ 整理关键观点和数据
-✓ 询问创作方向 → 用户选择"专业分析"、"深度引用"
-✓ 生成文章，引用原文 3 个核心观点，加入自己的分析
-✓ 用户确认后发布
-
-结果：
-• 生成了 2300 字的深度分析文章
-• 引用了原文 3 个观点和 2 个数据
-• 添加了参考资料链接
-• 已发布到微信草稿箱
-```
-
-### 示例 3: 直接发布链接文章
-
-```
-用户：发布这篇文章到公众号：https://blog.example.com/great-article
+用户：发布这篇文章到公众号：https://blog.example.com/docker
 
 Agent：
 ✓ 识别为链接发布模式
-✓ 下载文章 HTML 和 5 张图片
-✓ 清洗图片元数据（检测到 2 张含 AIGC 标记，已清洗）
-✓ 转换样式为内联格式
+✓ 下载文章 HTML 和 3 张图片
+✓ 清洗图片元数据
+✓ CSS 内联转换
 ✓ 展示处理结果
-✓ 用户确认"直接发布"
-✓ 使用 API 发布
-
-结果：
-• 处理后 HTML：wechat-temp/20260209-153000/processed.html
-• 清洗后图片：wechat-temp/20260209-153000/images/ (5张)
-• 微信草稿箱 media_id: xyz789...
-```
-
-### 示例 4: Markdown 文件发布
-
-```
-用户：发布这个 Markdown 文件：./posts/my-article.md
-
-Agent：
-✓ 读取文件，解析 frontmatter
-✓ 询问主题 → 用户选择 "grace"
-✓ 转换为 HTML，应用主题样式
-✓ 下载文章中的 3 张远程图片
-✓ 自动生成封面图（基于标题）
+✓ 用户确认
 ✓ 发布到微信
 
-结果：
-• HTML 输出至 ./posts/my-article.html
-• 封面图：./posts/my-article-cover.jpg
-• 已发布到草稿箱
+结果：草稿已保存（无生成步骤）
 ```
 
-### 示例 5: 图文消息发布
+### 示例 3: 发布 Markdown 文件（跳过生成）
 
 ```
-用户：发布一组产品图片到公众号，标题是"新品上市"
+用户：发布 ./articles/docker-tutorial.md
 
 Agent：
-✓ 识别为图文发布模式
-✓ 打开浏览器，定位到图文消息编辑器
-✓ 填写标题
-✓ 上传 6 张图片
-✓ 提交发布
+✓ 识别为 Markdown 发布模式
+✓ 解析 frontmatter
+✓ 渲染 HTML（grace 主题）
+✓ 下载 2 张远程图片
+✓ 自动生成封面
+✓ 发布到微信
 
-结果：
-• 图文消息已保存到草稿箱
-• 包含 6 张产品图片
+结果：草稿已保存（无生成步骤）
 ```
-
----
-
-## 参考文档
-
-| 主题 | 文档 |
-|------|------|
-| 图文发布参数、自动压缩 | [references/image-text-posting.md](references/image-text-posting.md) |
-| 文章主题、图片处理 | [references/article-posting.md](references/article-posting.md) |
 
 ---
 
@@ -1396,6 +1209,9 @@ Agent：
 
 本技能整合了以下功能和技术：
 
+- **wechat-article-generator**：AI 文章生成、模板库、样式系统
+- **wechat-article-writer**：内容理解与创作
+- **baoyu-post-to-wechat**：发布流程与技术实现
 - **Markdown 渲染**：基于 marked 及扩展插件
 - **样式主题**：参考微信公众号优秀排版实践
 - **图片处理**：JPEG 元数据清洗算法
@@ -1404,6 +1220,18 @@ Agent：
 ---
 
 ## 更新日志
+
+### v2.0.0 (2026-03-24)
+
+**重大更新**：整合 wechat-article-generator 与 wechat-article-maker
+
+- ✅ 新增 AI 文章生成能力（基于 generator）
+- ✅ 新增模板库（开篇、结尾、语言风格、结构）
+- ✅ 新增参数化配置（长度、深度、风格、代码、调研）
+- ✅ 保留独立发布能力（HTML/MD/链接直接发布）
+- ✅ 优化工作流程识别逻辑
+- ✅ 新增 package.json 依赖锁定
+- ✅ 新增示例文章
 
 ### v1.0.3 (2026-02-10)
 
@@ -1433,6 +1261,6 @@ Agent：
 
 ---
 
-**技能版本**：1.0.3
-**最后更新**：2026-02-10
-**作者**：整合自 wechat-article-writer 和 baoyu-post-to-wechat
+**技能版本**：2.0.0
+**最后更新**：2026-03-24
+**作者**：整合自 wechat-article-generator、wechat-article-writer 和 baoyu-post-to-wechat

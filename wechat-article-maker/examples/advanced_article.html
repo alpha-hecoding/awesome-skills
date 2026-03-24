@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Hooks：让 AI 编程助手如虎添翼的超级钩子</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            line-height: 1.8;
+            color: #333;
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .article-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1a73e8;
+            margin: 0 0 20px 0;
+            line-height: 1.4;
+        }
+        
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1a73e8;
+        }
+        
+        h3 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin: 30px 0 15px 0;
+        }
+        
+        h4 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+            margin: 25px 0 12px 0;
+        }
+        
+        p {
+            font-size: 16px;
+            line-height: 2;
+            color: #333;
+            margin: 15px 0;
+            text-align: justify;
+        }
+        
+        strong {
+            color: #1a73e8;
+            font-weight: 600;
+        }
+        
+        code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: "Courier New", monospace;
+            font-size: 14px;
+            color: #d93025;
+        }
+        
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: "Courier New", "Consolas", "Monaco", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        blockquote {
+            border-left: 4px solid #1a73e8;
+            padding-left: 20px;
+            margin: 25px 0;
+            color: #666;
+            font-style: italic;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 40px 0;
+        }
+        
+        ul, ol {
+            padding-left: 25px;
+            margin: 15px 0;
+        }
+        
+        li {
+            margin: 8px 0;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 15px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 30px auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .article-meta {
+            font-size: 14px;
+            color: #999;
+            margin: 30px 0 20px 0;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .example-box {
+            background: #f8f9fa;
+            border-left: 4px solid #1a73e8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #856404;
+        }
+        
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="article-container">
+        <h1>Claude Hooks：让 AI 编程助手如虎添翼的超级钩子</h1>
+        
+        <blockquote>
+            在 AI 编程助手的世界里，有一双看不见的手，在你每次敲击键盘时悄悄工作，它就是 Claude Hooks——让你的 AI 助手更智能、更安全、更强大。
+        </blockquote>
+        
+        <h2>引言：从被动响应到主动干预</h2>
+        
+        <p>想象一下，你的 AI 编程助手不仅能够响应你的指令，还能在你执行危险操作时发出警告，在代码风格不统一时自动修正，在项目启动时自动配置环境。这不是科幻，这就是 Claude Hooks 带来的现实。</p>
+        
+        <p>Claude Hooks 是 Claude Code 插件系统中最强大的组件之一，它允许你在 AI 助手执行的每一个关键节点插入自定义逻辑，实现从被动响应到主动干预的质的飞跃。</p>
+        
+        <hr />
+        
+        <h2>一、Claude Hooks 核心概念</h2>
+        
+        <h3>1.1 什么是 Hooks？</h3>
+        
+        <p>从本质上讲，Hooks（钩子）是一种事件驱动的编程机制。在 Claude Code 中，Hooks 就像是 AI 助手生命周期中的"检查点"，你可以定义特定的脚本或 AI 评估逻辑，在这些检查点自动执行。</p>
+        
+        <p><strong>核心特点：</strong></p>
+        <ul>
+            <li><strong>事件驱动</strong>：在特定事件发生时自动触发</li>
+            <li><strong>可编程</strong>：支持 Bash 命令和 LLM 评估两种方式</li>
+            <li><strong>多层次</strong>：可在用户、项目、插件、组件等多个层面定义</li>
+            <li><strong>并行执行</strong>：多个 Hooks 可以同时响应同一事件</li>
+        </ul>
+        
+        <h3>1.2 Hooks 的工作原理</h3>
+        
+        <p>Claude Hooks 的工作流程可以概括为：事件触发 → 匹配器筛选 → Hooks 执行 → 结果反馈。</p>
+        
+        <pre>{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/security-check.sh"
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+        
+        <img src="https://s.coze.cn/image/GQUnOulWZ3s/" alt="Claude Hooks 工作原理架构图" style="width: 100%; max-width: 712px;" />
+        
+        <p>在这个配置中，当 Claude 准备执行 Bash 工具时，会自动运行安全检查脚本，确保命令的安全性。</p>
+        
+        <hr />
+        
+        <h2>二、Claude Hooks 的两大执行模式</h2>
+        
+        <h3>2.1 Bash 命令 Hooks：确定性规则的守护者</h3>
+        
+        <p>Bash 命令 Hooks 是最传统也最可靠的 Hooks 类型，通过执行本地脚本来实现确定性的逻辑控制。</p>
+        
+        <p><strong>适用场景：</strong></p>
+        <ul>
+            <li>代码风格检查和自动格式化</li>
+            <li>安全性验证和权限控制</li>
+            <li>文件系统操作前的合法性检查</li>
+            <li>环境变量的自动配置</li>
+        </ul>
+        
+        <div class="example-box">
+            <h4>实战案例：自动代码格式化</h4>
+            <pre>#!/bin/bash
+# .claude/hooks/format-check.sh
+
+# 检查文件是否是 Python 文件
+if [[ "$CLAUDE_INPUT" == *.py ]]; then
+    # 运行 Black 格式化
+    black --check "$CLAUDE_INPUT"
+    if [ $? -ne 0 ]; then
+        echo "❌ 代码格式不符合 Black 标准"
+        echo "🔧 正在自动格式化..."
+        black "$CLAUDE_INPUT"
+        echo "✅ 格式化完成"
+    fi
+fi
+
+exit 0</pre>
+        </div>
+        
+        <h3>2.2 基于提示的 Hooks：智能决策的大脑</h3>
+        
+        <p>基于提示的 Hooks 是 Claude Hooks 系统中最具创新性的特性，它利用 LLM（大语言模型）来评估复杂的上下文，做出智能决策。</p>
+        
+        <p><strong>核心优势：</strong></p>
+        <ul>
+            <li><strong>上下文感知</strong>：理解对话历史和任务上下文</li>
+            <li><strong>自然语言推理</strong>：用自然语言定义判断逻辑</li>
+            <li><strong>灵活性强</strong>：适应多变的场景和需求</li>
+        </ul>
+        
+        <p><strong>适用场景：</strong></p>
+        <ul>
+            <li>判断任务是否真正完成</li>
+            <li>评估是否需要继续工作</li>
+            <li>复杂权限的智能决策</li>
+            <li>用户意图的理解和验证</li>
+        </ul>
+        
+        <img src="https://s.coze.cn/image/dZtxUcEl89o/" alt="Claude Hooks LLM 提示评估流程图" style="width: 100%; max-width: 712px;" />
+        
+        <div class="example-box">
+            <h4>实战案例：智能停止判断</h4>
+            <pre>{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "你正在评估 Claude 是否应该停止工作。\n\n上下文：$ARGUMENTS\n\n请分析：\n1. 用户要求的所有任务是否完成\n2. 是否存在需要修复的错误\n3. 是否需要后续的跟进工作\n\n返回 JSON 格式：\n{\"ok\": true} 允许停止\n{\"ok\": false, \"reason\": \"继续工作\"} 继续工作",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+        </div>
+        
+        <p><strong>两种模式的对比：</strong></p>
+        
+        <table>
+            <tr>
+                <th>特性</th>
+                <th>Bash 命令 Hooks</th>
+                <th>基于提示的 Hooks</th>
+            </tr>
+            <tr>
+                <td>执行方式</td>
+                <td>运行本地脚本</td>
+                <td>查询 LLM API</td>
+            </tr>
+            <tr>
+                <td>决策逻辑</td>
+                <td>确定性规则</td>
+                <td>上下文感知推理</td>
+            </tr>
+            <tr>
+                <td>设置复杂度</td>
+                <td>需要编写脚本</td>
+                <td>配置提示词</td>
+            </tr>
+            <tr>
+                <td>上下文理解</td>
+                <td>受限于脚本逻辑</td>
+                <td>自然语言理解</td>
+            </tr>
+            <tr>
+                <td>执行速度</td>
+                <td>快（本地执行）</td>
+                <td>较慢（API 调用）</td>
+            </tr>
+            <tr>
+                <td>最佳用途</td>
+                <td>确定性规则</td>
+                <td>智能决策判断</td>
+            </tr>
+        </table>
+        
+        <hr />
+        
+        <h2>三、Claude Hooks 的核心事件体系</h2>
+        
+        <img src="https://s.coze.cn/image/B-lqXzE9Kk4/" alt="Claude Hooks 事件生命周期时间轴" style="width: 100%; max-width: 712px;" />
+        
+        <p>Claude Hooks 定义了丰富的生命周期事件，覆盖了从会话启动到结束的全过程。</p>
+        
+        <h3>3.1 工具执行事件</h3>
+        
+        <p><strong>PreToolUse：工具执行前的守门人</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在 Claude 创建工具参数之后、处理工具调用之前</li>
+            <li><strong>核心价值</strong>：控制工具调用、修改工具输入、权限管理</li>
+            <li><strong>常见用途</strong>：安全性验证、输入参数校验、敏感操作拦截</li>
+        </ul>
+        
+        <div class="example-box">
+            <h4>实战案例：防止删除重要文件</h4>
+            <pre>#!/bin/bash
+# .claude/hooks/protect-important-files.sh
+
+FILE_PATH=$(echo "$CLAUDE_INPUT" | jq -r '.file_path')
+
+# 定义受保护的文件列表
+PROTECTED_FILES=(
+    "/etc/passwd"
+    "/etc/hosts"
+    "package-lock.json"
+    "yarn.lock"
+)
+
+for protected in "${PROTECTED_FILES[@]}"; do
+    if [[ "$FILE_PATH" == *"$protected"* ]]; then
+        echo "❌ 错误：试图删除受保护文件"
+        echo "📁 文件：$FILE_PATH"
+        echo "🔒 此文件受 Hooks 保护，无法删除"
+        exit 2  # 退出码 2 表示阻止操作
+    fi
+done
+
+exit 0</pre>
+        </div>
+        
+        <p><strong>PostToolUse：工具执行后的分析师</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在工具成功完成后立即运行</li>
+            <li><strong>核心价值</strong>：执行后处理、结果验证、上下文增强</li>
+            <li><strong>常见用途</strong>：代码审查、日志记录、格式化、测试触发</li>
+        </ul>
+        
+        <img src="https://s.coze.cn/image/1G1YA-ffXyI/" alt="Claude Hooks PreToolUse PostToolUse 事件对比图" style="width: 100%; max-width: 712px;" />
+        
+        <h3>3.2 权限管理事件</h3>
+        
+        <p><strong>PermissionRequest：智能权限决策器</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在向用户显示权限对话框时运行</li>
+            <li><strong>核心价值</strong>：代表用户自动允许或拒绝权限请求</li>
+            <li><strong>常见用途</strong>：自动批准安全操作、拦截高风险操作</li>
+        </ul>
+        
+        <h3>3.3 会话生命周期事件</h3>
+        
+        <p><strong>SessionStart：环境配置师</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在 Claude Code 启动新会话或恢复现有会话时运行</li>
+            <li><strong>核心价值</strong>：自动加载开发上下文、配置环境、安装依赖</li>
+            <li><strong>触发类型</strong>：<code>startup</code>、<code>resume</code>、<code>clear</code>、<code>compact</code></li>
+        </ul>
+        
+        <div class="example-box">
+            <h4>实战案例：自动环境配置</h4>
+            <pre>#!/bin/bash
+# .claude/hooks/session-start.sh
+
+# 激活 Python 虚拟环境
+if [ -d "venv" ]; then
+    source venv/bin/activate
+    echo "✅ Python 虚拟环境已激活"
+fi
+
+# 检查并安装依赖
+if [ -f "requirements.txt" ]; then
+    pip install -q -r requirements.txt
+    echo "✅ 依赖已安装"
+fi
+
+# 持久化环境变量
+if [ -n "$CLAUDE_ENV_FILE" ]; then
+    echo 'export PROJECT_ROOT=$(pwd)' >> "$CLAUDE_ENV_FILE"
+    echo 'export PYTHONPATH=$PYTHONPATH:$(pwd)' >> "$CLAUDE_ENV_FILE"
+fi
+
+exit 0</pre>
+        </div>
+        
+        <p><strong>SessionEnd：清理工程师</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在 Claude Code 会话结束时运行</li>
+            <li><strong>核心价值</strong>：清理资源、记录统计、保存状态</li>
+            <li><strong>退出原因</strong>：<code>clear</code>、<code>logout</code>、<code>prompt_input_exit</code>、<code>other</code></li>
+        </ul>
+        
+        <h3>3.4 通知与交互事件</h3>
+        
+        <p><strong>Notification：消息分发器</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在 Claude Code 发送通知时运行</li>
+            <li><strong>常见通知类型</strong>：<code>permission_prompt</code>、<code>idle_prompt</code>、<code>auth_success</code>、<code>elicitation_dialog</code></li>
+        </ul>
+        
+        <p><strong>UserPromptSubmit：提示验证官</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在用户提交提示时，在 Claude 处理之前运行</li>
+            <li><strong>核心价值</strong>：验证用户输入、添加额外上下文、阻止无效提示</li>
+            <li><strong>常见用途</strong>：提示词过滤、自动补充上下文、敏感内容检测</li>
+        </ul>
+        
+        <h3>3.5 会话控制事件</h3>
+        
+        <p><strong>Stop：智能停止判断</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在主 Claude Code agent 完成响应时运行</li>
+            <li><strong>核心价值</strong>：判断任务是否真正完成，避免过早停止</li>
+            <li><strong>注意</strong>：如果停止是由于用户中断而发生的，则不运行</li>
+        </ul>
+        
+        <p><strong>SubagentStop：子任务管理</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在 Claude Code subagent（Task 工具调用）完成响应时运行</li>
+            <li><strong>核心价值</strong>：评估子任务是否完成，协调多个子任务</li>
+        </ul>
+        
+        <p><strong>PreCompact：压缩前预检</strong></p>
+        <ul>
+            <li><strong>触发时机</strong>：在 Claude Code 即将运行压缩操作之前运行</li>
+            <li><strong>触发类型</strong>：<code>manual</code>（从 /compact 调用）、<code>auto</code>（从自动压缩调用）</li>
+        </ul>
+        
+        <hr />
+        
+        <h2>四、Claude Hooks 的多层次配置</h2>
+        
+        <img src="https://s.coze.cn/image/Yu2j0b1iGys/" alt="Claude Hooks 多层次配置架构图" style="width: 100%; max-width: 712px;" />
+        
+        <p>Claude Hooks 支持在多个层面进行配置，形成了一个灵活的多层次架构。</p>
+        
+        <h3>4.1 全局用户级 Hooks</h3>
+        
+        <p><strong>配置文件</strong>：<code>~/.claude/settings.json</code></p>
+        
+        <p><strong>特点</strong>：</p>
+        <ul>
+            <li>对所有项目和会话生效</li>
+            <li>适用于个人编码规范和安全策略</li>
+            <li>优先级低于项目和插件 Hooks</li>
+        </ul>
+        
+        <p><strong>典型应用</strong>：</p>
+        <ul>
+            <li>全局代码风格检查</li>
+            <li>个人安全策略</li>
+            <li>常用工具的快捷配置</li>
+        </ul>
+        
+        <h3>4.2 项目级 Hooks</h3>
+        
+        <p><strong>配置文件</strong>：</p>
+        <ul>
+            <li><code>.claude/settings.json</code>（项目设置，可提交到版本控制）</li>
+            <li><code>.claude/settings.local.json</code>（本地项目设置，不提交）</li>
+        </ul>
+        
+        <p><strong>特点</strong>：</p>
+        <ul>
+            <li>仅对当前项目生效</li>
+            <li>适用于项目特定的规范和工作流</li>
+            <li>优先级高于用户级 Hooks</li>
+        </ul>
+        
+        <p><strong>典型应用</strong>：</p>
+        <ul>
+            <li>项目特定的代码规范</li>
+            <li>项目依赖的自动配置</li>
+            <li>项目特定的工作流自动化</li>
+        </ul>
+        
+        <h3>4.3 插件级 Hooks</h3>
+        
+        <p><strong>配置文件</strong>：<code>hooks/hooks.json</code>（在插件目录下）</p>
+        
+        <p><strong>特点</strong>：</p>
+        <ul>
+            <li>与插件无缝集成</li>
+            <li>插件启用时自动合并到配置</li>
+            <li>支持多个插件 Hooks 响应同一事件</li>
+        </ul>
+        
+        <p><strong>典型应用</strong>：</p>
+        <ul>
+            <li>第三方服务的集成</li>
+            <li>特定技术栈的支持</li>
+            <li>团队共享的 Hooks 库</li>
+        </ul>
+        
+        <div class="example-box">
+            <h4>实战案例：自动代码格式化插件</h4>
+            <pre>{
+  "description": "Automatic code formatting plugin",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/format.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+        </div>
+        
+        <h3>4.4 组件级 Hooks</h3>
+        
+        <p><strong>支持组件</strong>：</p>
+        <ul>
+            <li>Skills（技能）</li>
+            <li>Agents（代理）</li>
+            <li>Slash Commands（斜杠命令）</li>
+        </ul>
+        
+        <p><strong>特点</strong>：</p>
+        <ul>
+            <li>仅在组件生命周期内运行</li>
+            <li>组件执行完毕后自动清理</li>
+            <li>支持 <code>once</code> 选项（每个会话只运行一次）</li>
+        </ul>
+        
+        <p><strong>典型应用</strong>：</p>
+        <ul>
+            <li>特定技能的安全检查</li>
+            <li>代理任务的事后处理</li>
+            <li>命令执行的前置验证</li>
+        </ul>
+        
+        <div class="example-box">
+            <h4>实战案例：安全操作技能</h4>
+            <pre>---
+name: secure-operations
+description: 执行带安全检查的操作
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "./scripts/security-check.sh"
+  once: true  # 每个会话只运行一次
+---</pre>
+        </div>
+        
+        <h3>4.5 Hooks 优先级和合并规则</h3>
+        
+        <p>当多个来源的 Hooks 响应同一事件时：</p>
+        <ol>
+            <li><strong>并行执行</strong>：所有匹配的 Hooks 同时运行</li>
+            <li><strong>独立决策</strong>：每个 Hook 独立做出决策</li>
+            <li><strong>结果合并</strong>：
+                <ul>
+                    <li>任一 Hook 阻止（退出码 2），操作被阻止</li>
+                    <li>所有 Hook 允许（退出码 0），操作继续</li>
+                    <li>输出按执行顺序叠加显示</li>
+                </ul>
+            </li>
+        </ol>
+        
+        <hr />
+        
+        <h2>五、Claude Hooks 的高级特性</h2>
+        
+        <h3>5.1 结构化 JSON 输出</h3>
+        
+        <p>除了简单的退出码，Hooks 还可以通过 JSON 输出实现更复杂的控制。</p>
+        
+        <p><strong>通用 JSON 字段</strong>：</p>
+        <pre>{
+  "continue": true,
+  "stopReason": "停止原因",
+  "suppressOutput": true,
+  "systemMessage": "系统警告消息"
+}</pre>
+        
+        <h3>5.2 PreToolUse 决策控制</h3>
+        
+        <p>PreToolUse Hooks 支持三种决策模式：</p>
+        
+        <p><strong>allow：自动允许</strong></p>
+        <pre>{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "allow",
+    "permissionDecisionReason": "安全操作，自动允许"
+  }
+}</pre>
+        
+        <p><strong>deny：拒绝执行</strong></p>
+        <pre>{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "deny",
+    "permissionDecisionReason": "危险操作，已拦截"
+  }
+}</pre>
+        
+        <p><strong>ask：询问用户</strong></p>
+        <pre>{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "ask",
+    "permissionDecisionReason": "需要用户确认"
+  }
+}</pre>
+        
+        <p><strong>updatedInput：修改工具输入</strong></p>
+        <pre>{
+  "hookSpecificOutput": {
+    "hookEventName": "PreToolUse",
+    "permissionDecision": "allow",
+    "updatedInput": {
+      "command": "npm run lint -- --fix"
+    }
+  }
+}</pre>
+        
+        <h3>5.3 PostToolUse 决策控制</h3>
+        
+        <p>PostToolUse Hooks 可以为 Claude 提供反馈：</p>
+        <pre>{
+  "decision": "block",
+  "reason": "代码存在安全问题，请修复",
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolUse",
+    "additionalContext": "建议使用参数化查询替代字符串拼接"
+  }
+}</pre>
+        
+        <h3>5.4 UserPromptSubmit 上下文注入</h3>
+        
+        <p>UserPromptSubmit Hooks 可以向对话添加额外上下文：</p>
+        
+        <p><strong>方式一：纯文本输出（简单）</strong></p>
+        <pre>#!/bin/bash
+echo "当前项目：E-commerce 平台"
+echo "技术栈：React + Node.js + PostgreSQL"
+echo "注意：生产环境部署前必须通过安全审查"
+exit 0</pre>
+        
+        <p><strong>方式二：JSON 结构化输出（高级）</strong></p>
+        <pre>{
+  "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
+    "additionalContext": "当前项目是金融级应用，所有代码变更必须通过安全审计"
+  }
+}</pre>
+        
+        <p><strong>阻止提示</strong>：</p>
+        <pre>{
+  "decision": "block",
+  "reason": "提示包含敏感词，已被阻止"
+}</pre>
+        
+        <hr />
+        
+        <h2>六、Claude Hooks 实战案例</h2>
+        
+        <h3>6.1 案例一：企业级代码质量保障系统</h3>
+        
+        <p><strong>背景</strong>：一家大型企业需要确保所有代码变更都符合公司规范。</p>
+        
+        <p><strong>解决方案</strong>：</p>
+        
+        <h4>1. PreToolUse Hook：代码审查前检查</h4>
+        <pre>#!/bin/bash
+# .claude/hooks/pre-code-review.sh
+
+# 检查是否是代码编辑操作
+TOOL_NAME=$(echo "$CLAUDE_INPUT" | jq -r '.tool_name')
+
+if [[ "$TOOL_NAME" == "Edit" || "$TOOL_NAME" == "Write" ]]; then
+    FILE_PATH=$(echo "$CLAUDE_INPUT" | jq -r '.tool_input.file_path')
+    
+    # 检查文件是否在保护目录中
+    if [[ "$FILE_PATH" == *"/production/"* ]]; then
+        echo "⚠️  警告：正在修改生产环境代码"
+        echo "📋 请确保已通过 Code Review 流程"
+        echo "🔗 相关文档：https://wiki.company.com/code-review"
+        
+        # 不阻止，但给出警告
+        exit 0
+    fi
+fi
+
+exit 0</pre>
+        
+        <h4>2. PostToolUse Hook：自动格式化和测试</h4>
+        <pre>#!/bin/bash
+# .claude/hooks/post-code-check.sh
+
+TOOL_NAME=$(echo "$CLAUDE_INPUT" | jq -r '.tool_name')
+
+if [[ "$TOOL_NAME" == "Write" || "$TOOL_NAME" == "Edit" ]]; then
+    FILE_PATH=$(echo "$CLAUDE_INPUT" | jq -r '.tool_input.file_path')
+    
+    # 自动格式化 Python 文件
+    if [[ "$FILE_PATH" == *.py ]]; then
+        echo "🔧 正在格式化 Python 文件..."
+        black "$FILE_PATH"
+        
+        # 运行类型检查
+        echo "🔍 正在进行类型检查..."
+        mypy "$FILE_PATH"
+    fi
+    
+    # 自动格式化 JavaScript/TypeScript 文件
+    if [[ "$FILE_PATH" == *.js || "$FILE_PATH" == *.ts ]]; then
+        echo "🔧 正在格式化 JavaScript/TypeScript 文件..."
+        prettier --write "$FILE_PATH"
+        
+        # 运行 ESLint
+        echo "🔍 正在运行 ESLint..."
+        eslint "$FILE_PATH" --fix
+    fi
+fi
+
+exit 0</pre>
+        
+        <img src="https://s.coze.cn/image/9SCcz97GX9w/" alt="Claude Hooks 安全检查自动化流程示意图" style="width: 100%; max-width: 712px;" />
+        
+        <p><strong>效果</strong>：</p>
+        <div class="success-box">
+            <ul>
+                <li>✅ 所有代码自动符合公司规范</li>
+                <li>✅ 实时反馈代码质量问题</li>
+                <li>✅ 减少人工审查负担</li>
+            </ul>
+        </div>
+        
+        <h3>6.2 案例二：多环境智能部署系统</h3>
+        
+        <p><strong>背景</strong>：一个需要同时在开发、测试、生产三个环境部署的系统。</p>
+        
+        <p><strong>解决方案</strong>：</p>
+        <pre>#!/bin/bash
+# .claude/hooks/smart-deploy.sh
+
+# 从 Hook 输入中提取环境信息
+ENV=$(echo "$CLAUDE_INPUT" | jq -r '.tool_input.environment')
+
+case "$ENV" in
+    "dev")
+        echo "🔧 部署到开发环境"
+        echo "⚠️  注意：开发环境数据可能在任何时刻被重置"
+        ;;
+    "staging")
+        echo "🧪 部署到测试环境"
+        echo "✅ 将运行完整的测试套件"
+        
+        # 运行测试
+        npm test
+        
+        if [ $? -ne 0 ]; then
+            echo "❌ 测试失败，部署中止"
+            exit 2
+        fi
+        ;;
+    "production")
+        echo "🚀 部署到生产环境"
+        echo "⚠️  警告：生产环境部署需要额外确认"
+        echo "📋 请确保已通过所有审查流程"
+        echo "🔗 回滚计划：https://ops.company.com/rollback/$CURRENT_VERSION"
+        ;;
+    *)
+        echo "❌ 错误：未知环境 '$ENV'"
+        echo "📋 可用环境：dev, staging, production"
+        exit 2
+        ;;
+esac
+
+exit 0</pre>
+        
+        <p><strong>配置</strong>：</p>
+        <pre>{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "deploy",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/smart-deploy.sh"
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+        
+        <p><strong>效果</strong>：</p>
+        <div class="success-box">
+            <ul>
+                <li>✅ 根据环境自动应用不同的策略</li>
+                <li>✅ 测试环境自动运行测试</li>
+                <li>✅ 生产环境提供安全警告和回滚方案</li>
+            </ul>
+        </div>
+        
+        <h3>6.3 案例三：智能学习助手</h3>
+        
+        <p><strong>背景</strong>：一个帮助学生学习编程的 AI 助手，需要根据学生进度调整难度。</p>
+        
+        <p><strong>解决方案</strong>：</p>
+        <pre>{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/assess-student-level.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "你正在评估一个编程学习会话是否应该结束。\n\n学生水平：${STUDENT_LEVEL}\n完成的任务数：${TASK_COUNT}\n正确率：${ACCURACY}\n\n请判断：\n1. 学生是否真正理解了当前概念\n2. 是否需要更多的练习\n3. 是否应该进入下一个难度级别\n\n返回 JSON：\n{\"ok\": true} 允许结束\n{\"ok\": false, \"reason\": \"原因\"} 继续学习"
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+        
+        <p><strong>评估脚本</strong>：</p>
+        <pre>#!/bin/bash
+# .claude/hooks/assess-student-level.sh
+
+# 从历史记录中分析学生水平
+CORRECT_ANSWERS=$(grep "正确" ~/.claude/student_history.json | wc -l)
+TOTAL_QUESTIONS=$(grep "问题" ~/.claude/student_history.json | wc -l)
+ACCURACY=$((CORRECT_ANSWERS * 100 / TOTAL_QUESTIONS))
+
+if [ "$ACCURACY" -gt 80 ]; then
+    echo "学生当前水平：高级"
+    echo "建议：可以进入下一阶段学习"
+elif [ "$ACCURACY" -gt 60 ]; then
+    echo "学生当前水平：中级"
+    echo "建议：继续当前难度，增加练习"
+else
+    echo "学生当前水平：初级"
+    echo "建议：降低难度，加强基础"
+fi
+
+# 将评估结果注入上下文
+echo "STUDENT_LEVEL=$( [ "$ACCURACY" -gt 80 ] && echo "高级" || ([ "$ACCURACY" -gt 60 ] && echo "中级" || echo "初级" ))"
+echo "TASK_COUNT=$TOTAL_QUESTIONS"
+echo "ACCURACY=$ACCURACY%"
+
+exit 0</pre>
+        
+        <p><strong>效果</strong>：</p>
+        <div class="success-box">
+            <ul>
+                <li>✅ 根据学生表现自动调整难度</li>
+                <li>✅ 提供个性化的学习建议</li>
+                <li>✅ 确保学生真正理解后再继续</li>
+            </ul>
+        </div>
+        
+        <hr />
+        
+        <h2>七、Claude Hooks 最佳实践</h2>
+        
+        <h3>7.1 Bash Hooks 最佳实践</h3>
+        
+        <p><strong>1. 保持脚本简洁</strong></p>
+        <ul>
+            <li>每个 Hook 只做一件事</li>
+            <li>避免复杂的逻辑链</li>
+            <li>优先使用标准工具</li>
+        </ul>
+        
+        <p><strong>2. 正确使用退出码</strong></p>
+        <ul>
+            <li><code>0</code>：成功，继续执行</li>
+            <li><code>2</code>：阻止操作，显示错误</li>
+            <li>其他：非阻止错误</li>
+        </ul>
+        
+        <p><strong>3. 提供清晰的输出</strong></p>
+        <ul>
+            <li>使用表情符号增强可读性</li>
+            <li>输出应该简洁明确</li>
+            <li>包含必要的上下文信息</li>
+        </ul>
+        
+        <p><strong>4. 使用环境变量</strong></p>
+        <pre>echo "项目目录：$CLAUDE_PROJECT_DIR"
+echo "插件根目录：${CLAUDE_PLUGIN_ROOT}"
+echo "当前会话 ID：$CLAUDE_SESSION_ID"</pre>
+        
+        <h3>7.2 基于提示的 Hooks 最佳实践</h3>
+        
+        <p><strong>1. 明确提示词</strong></p>
+        <ul>
+            <li>清楚说明要评估的内容</li>
+            <li>提供具体的判断标准</li>
+            <li>使用结构化的 JSON 响应格式</li>
+        </ul>
+        
+        <p><strong>2. 设置合理的超时</strong></p>
+        <pre>{
+  "timeout": 30  // 默认 30 秒，根据需要调整
+}</pre>
+        
+        <p><strong>3. 测试和迭代</strong></p>
+        <ul>
+            <li>验证 LLM 的决策准确性</li>
+            <li>根据实际效果调整提示词</li>
+            <li>收集边界案例进行优化</li>
+        </ul>
+        
+        <p><strong>4. 用于复杂决策</strong></p>
+        <ul>
+            <li>Bash Hooks 适合确定性规则</li>
+            <li>提示 Hooks 适合需要上下文理解的场景</li>
+        </ul>
+        
+        <h3>7.3 性能优化</h3>
+        
+        <p><strong>1. 并行执行</strong></p>
+        <ul>
+            <li>多个 Hooks 可以同时运行</li>
+            <li>避免串行依赖的设计</li>
+        </ul>
+        
+        <p><strong>2. 快速失败</strong></p>
+        <ul>
+            <li>在 Hook 早期进行关键检查</li>
+            <li>避免不必要的计算</li>
+        </ul>
+        
+        <p><strong>3. 缓存结果</strong></p>
+        <pre>#!/bin/bash
+CACHE_FILE="/tmp/claude-hook-cache.txt"
+
+if [ -f "$CACHE_FILE" ]; then
+    cat "$CACHE_FILE"
+    exit 0
+fi
+
+# 执行计算
+RESULT=$(expensive-computation)
+
+# 缓存结果
+echo "$RESULT" > "$CACHE_FILE"
+
+echo "$RESULT"
+exit 0</pre>
+        
+        <h3>7.4 安全性考虑</h3>
+        
+        <p><strong>1. 验证输入</strong></p>
+        <pre>#!/bin/bash
+FILE_PATH=$(echo "$CLAUDE_INPUT" | jq -r '.file_path')
+
+# 检查路径是否在允许的范围内
+if [[ "$FILE_PATH" != "/allowed/path/"* ]]; then
+    echo "❌ 错误：路径不在允许范围内"
+    exit 2
+fi</pre>
+        
+        <p><strong>2. 避免代码注入</strong></p>
+        <ul>
+            <li>使用 <code>jq</code> 安全解析 JSON</li>
+            <li>避免直接执行用户输入</li>
+            <li>使用绝对路径引用脚本</li>
+        </ul>
+        
+        <p><strong>3. 最小权限原则</strong></p>
+        <ul>
+            <li>Hooks 只执行必要的操作</li>
+            <li>避免使用 root 权限</li>
+            <li>限制访问敏感资源</li>
+        </ul>
+        
+        <hr />
+        
+        <h2>八、Claude Hooks 与其他技术的对比</h2>
+        
+        <h3>8.1 与 Git Hooks 的对比</h3>
+        
+        <table>
+            <tr>
+                <th>特性</th>
+                <th>Claude Hooks</th>
+                <th>Git Hooks</th>
+            </tr>
+            <tr>
+                <td>触发时机</td>
+                <td>AI 助手生命周期事件</td>
+                <td>Git 操作事件</td>
+            </tr>
+            <tr>
+                <td>执行环境</td>
+                <td>Claude Code 运行时</td>
+                <td>Git 操作时</td>
+            </tr>
+            <tr>
+                <td>主要用途</td>
+                <td>AI 助手增强</td>
+                <td>版本控制自动化</td>
+            </tr>
+            <tr>
+                <td>智能程度</td>
+                <td>支持 LLM 评估</td>
+                <td>纯脚本执行</td>
+            </tr>
+            <tr>
+                <td>配置层次</td>
+                <td>多层次（用户/项目/插件）</td>
+                <td>仓库级别</td>
+            </tr>
+        </table>
+        
+        <p><strong>互补性</strong>：</p>
+        <ul>
+            <li>Git Hooks 负责版本控制流程</li>
+            <li>Claude Hooks 负责 AI 助手交互</li>
+            <li>两者可以协同工作</li>
+        </ul>
+        
+        <h3>8.2 与 CI/CD Pipeline 的对比</h3>
+        
+        <table>
+            <tr>
+                <th>特性</th>
+                <th>Claude Hooks</th>
+                <th>CI/CD Pipeline</th>
+            </tr>
+            <tr>
+                <td>执行时机</td>
+                <td>实时交互时</td>
+                <td>构建和部署时</td>
+            </tr>
+            <tr>
+                <td>反馈速度</td>
+                <td>即时反馈</td>
+                <td>延迟反馈</td>
+            </tr>
+            <tr>
+                <td>交互性</td>
+                <td>高交互性</td>
+                <td>低交互性</td>
+            </tr>
+            <tr>
+                <td>主要用途</td>
+                <td>开发时辅助</td>
+                <td>自动化测试和部署</td>
+            </tr>
+        </table>
+        
+        <p><strong>协同使用</strong>：</p>
+        <ul>
+            <li>Claude Hooks 在开发时提供即时反馈</li>
+            <li>CI/CD Pipeline 在提交后进行全面检查</li>
+            <li>两者形成完整的质量保障体系</li>
+        </ul>
+        
+        <hr />
+        
+        <h2>九、常见问题与解决方案</h2>
+        
+        <h3>9.1 Hooks 不生效</h3>
+        
+        <p><strong>问题</strong>：配置了 Hooks 但没有执行。</p>
+        
+        <p><strong>排查步骤</strong>：</p>
+        <ol>
+            <li>检查配置文件路径是否正确</li>
+            <li>验证 JSON 格式是否有效</li>
+            <li>确认事件名称和匹配器是否正确</li>
+            <li>检查脚本是否有执行权限</li>
+        </ol>
+        
+        <p><strong>解决方法</strong>：</p>
+        <pre># 添加执行权限
+chmod +x .claude/hooks/*.sh
+
+# 验证 JSON 格式
+cat .claude/settings.json | jq '.'
+
+# 测试 Hook 脚本
+./.claude/hooks/test-hook.sh</pre>
+        
+        <h3>9.2 Hooks 执行超时</h3>
+        
+        <p><strong>问题</strong>：Hook 执行时间过长导致超时。</p>
+        
+        <p><strong>解决方法</strong>：</p>
+        <pre>{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./script.sh",
+            "timeout": 60  // 增加超时时间
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+        
+        <h3>9.3 Hooks 互相干扰</h3>
+        
+        <p><strong>问题</strong>：多个 Hooks 产生冲突的输出。</p>
+        
+        <p><strong>解决方法</strong>：</p>
+        <ul>
+            <li>使用 <code>suppressOutput</code> 控制输出</li>
+            <li>明确每个 Hook 的职责</li>
+            <li>使用 <code>continue</code> 字段控制执行流程</li>
+        </ul>
+        
+        <h3>9.4 环境变量不可用</h3>
+        
+        <p><strong>问题</strong>：Hook 中无法访问 <code>CLAUDE_PROJECT_DIR</code> 等环境变量。</p>
+        
+        <p><strong>解决方法</strong>：</p>
+        <pre>#!/bin/bash
+# 检查环境变量是否存在
+if [ -z "$CLAUDE_PROJECT_DIR" ]; then
+    echo "❌ 错误：CLAUDE_PROJECT_DIR 未设置"
+    exit 2
+fi
+
+# 使用环境变量
+cd "$CLAUDE_PROJECT_DIR"</pre>
+        
+        <hr />
+        
+        <h2>十、Claude Hooks 技术学习路径建议</h2>
+        
+        <img src="https://s.coze.cn/image/fma47E7Tc6c/" alt="Claude Hooks 学习路径四阶段图" style="width: 100%; max-width: 712px;" />
+        
+        <h3>阶段一：基础入门（1-2 周）</h3>
+        
+        <p><strong>学习目标</strong>：</p>
+        <ul>
+            <li>理解 Claude Hooks 的基本概念和工作原理</li>
+            <li>掌握配置文件的结构和语法</li>
+            <li>实现简单的 Bash Hooks</li>
+        </ul>
+        
+        <p><strong>推荐资源</strong>：</p>
+        <ul>
+            <li>Claude Code 官方文档 - Hooks 章节</li>
+            <li>Bash 脚本编程基础教程</li>
+            <li>JSON 配置文件格式规范</li>
+        </ul>
+        
+        <p><strong>实践任务</strong>：</p>
+        <ol>
+            <li>创建一个简单的 PreToolUse Hook，在写入文件前打印提示</li>
+            <li>配置 PostToolUse Hook，在编辑代码后自动运行格式化工具</li>
+            <li>实现一个 SessionStart Hook，自动激活 Python 虚拟环境</li>
+        </ol>
+        
+        <h3>阶段二：进阶实践（2-4 周）</h3>
+        
+        <p><strong>学习目标</strong>：</p>
+        <ul>
+            <li>掌握多种事件类型的应用场景</li>
+            <li>实现复杂的 Hook 逻辑</li>
+            <li>理解 Hooks 的多层次配置</li>
+        </ul>
+        
+        <p><strong>推荐资源</strong>：</p>
+        <ul>
+            <li>高级 Bash 编程技巧</li>
+            <li>正则表达式教程（用于匹配器）</li>
+            <li>Git Hooks 和 CI/CD Pipeline 对比学习</li>
+        </ul>
+        
+        <p><strong>实践任务</strong>：</p>
+        <ol>
+            <li>实现一个完整的代码质量检查 Hook 系统</li>
+            <li>配置项目级和插件级 Hooks，理解优先级规则</li>
+            <li>创建一个多环境部署的智能 Hook 系统</li>
+            <li>实现基于 JSON 输出的复杂决策逻辑</li>
+        </ol>
+        
+        <h3>阶段三：高级精通（1-2 个月）</h3>
+        
+        <p><strong>学习目标</strong>：</p>
+        <ul>
+            <li>掌握基于提示的 Hooks 的设计和优化</li>
+            <li>理解 LLM 提示工程的原理</li>
+            <li>实现企业级的 Hooks 解决方案</li>
+        </ul>
+        
+        <p><strong>推荐资源</strong>：</p>
+        <ul>
+            <li>提示工程（Prompt Engineering）最佳实践</li>
+            <li>LLM API 使用文档</li>
+            <li>企业级自动化架构设计</li>
+        </ul>
+        
+        <p><strong>实践任务</strong>：</p>
+        <ol>
+            <li>设计并实现一个智能代码审查 Hook 系统</li>
+            <li>创建一个基于 LLM 的学习辅助 Hook</li>
+            <li>实现一个企业级的 Hooks 管理和监控平台</li>
+            <li>开发可复用的 Hooks 插件库</li>
+        </ol>
+        
+        <h3>阶段四：专家级探索（持续）</h3>
+        
+        <p><strong>学习目标</strong>：</p>
+        <ul>
+            <li>参与 Claude Hooks 社区建设</li>
+            <li>贡献开源 Hooks 项目</li>
+            <li>设计创新的 Hooks 应用场景</li>
+        </ul>
+        
+        <p><strong>推荐资源</strong>：</p>
+        <ul>
+            <li>Claude Code 插件生态</li>
+            <li>开源社区最佳实践</li>
+            <li>AI 辅助编程前沿研究</li>
+        </ul>
+        
+        <p><strong>探索方向</strong>：</p>
+        <ol>
+            <li>Hooks 与其他 AI 工具的集成</li>
+            <li>Hooks 在新兴领域的应用（如 DevOps、安全审计）</li>
+            <li>Hooks 性能优化和大规模部署方案</li>
+            <li>Hooks 与传统自动化工具的融合</li>
+        </ol>
+        
+        <h3>学习资源汇总</h3>
+        
+        <p><strong>官方文档</strong>：</p>
+        <ul>
+            <li>Claude Code 官方文档：https://code.claude.com/docs/zh-CN/hooks</li>
+            <li>Hooks API 参考文档</li>
+            <li>插件开发指南</li>
+        </ul>
+        
+        <p><strong>社区资源</strong>：</p>
+        <ul>
+            <li>Claude Code Discord 社区</li>
+            <li>GitHub 上的 Hooks 示例项目</li>
+            <li>技术博客和案例分析</li>
+        </ul>
+        
+        <p><strong>书籍推荐</strong>：</p>
+        <ul>
+            <li>《Bash 脚本编程艺术》</li>
+            <li>《Prompt Engineering 实战》</li>
+            <li>《企业级自动化架构》</li>
+        </ul>
+        
+        <hr />
+        
+        <h2>结语：开启 AI 编程新纪元</h2>
+        
+        <p>Claude Hooks 不仅是一个技术特性，更是 AI 编程助手进化的里程碑。它让我们从简单的"指令-响应"模式，迈向了"智能协作"的新时代。</p>
+        
+        <p>通过 Hooks，你可以：</p>
+        <ul>
+            <li>让 AI 助手真正理解你的工作流程</li>
+            <li>实现个性化的自动化策略</li>
+            <li>构建企业级的质量保障体系</li>
+            <li>探索 AI 与人类协作的新范式</li>
+        </ul>
+        
+        <div class="success-box">
+            <h4>现在就开始你的 Hooks 之旅吧！</h4>
+            <p>从一个简单的 PreToolUse Hook 开始，逐步探索这个强大的功能。你会发现，AI 编程助手的潜力远超你的想象。</p>
+        </div>
+        
+        <div class="article-meta">
+            <p><strong>作者</strong>：AI 编程实践者</p>
+            <p><strong>发布时间</strong>：2025 年 12 月</p>
+            <p><strong>参考文档</strong>：Claude Code Hooks Reference</p>
+            <p><strong>相关阅读</strong>：</p>
+            <ul>
+                <li><a href="#">Claude Code 插件系统详解</a></li>
+                <li><a href="#">AI 编程助手最佳实践</a></li>
+                <li><a href="#">企业级 Hooks 应用案例集</a></li>
+            </ul>
+        </div>
+        
+        <hr />
+        
+        <p style="text-align: center; color: #999; font-size: 14px;">*本文为原创技术文章，转载请注明出处。</p>
+        
+    </div>
+</body>
+</html>

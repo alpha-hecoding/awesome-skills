@@ -1,0 +1,26 @@
+{
+  "name": "wechat-article-maker",
+  "version": "2.0.0",
+  "description": "智能创作并发布微信公众号文章 - 整合AI生成与完整发布流程",
+  "author": "integrated from wechat-article-writer, baoyu-post-to-wechat, and wechat-article-generator",
+  "license": "MIT",
+  "dependencies": {
+    "front-matter": "^4.0.2",
+    "highlight.js": "^11.9.0",
+    "marked": "^12.0.0",
+    "reading-time": "^1.5.0",
+    "juice": "^10.0.0"
+  },
+  "optionalDependencies": {
+    "@napi-rs/canvas": "^0.1.44",
+    "sharp": "^0.33.2"
+  },
+  "keywords": [
+    "wechat",
+    "article",
+    "markdown",
+    "ai",
+    "generator",
+    "publisher"
+  ]
+}

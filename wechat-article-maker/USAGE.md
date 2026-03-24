@@ -22,6 +22,24 @@ npx -y bun scripts/<script>.ts [options]
 
 ---
 
+## 可用脚本
+
+| 脚本 | 功能 | 用途 |
+|------|------|------|
+| `wechat-api.ts` | API 发布 | 通过微信 API 发布文章到草稿箱 |
+| `wechat-article.ts` | 浏览器发布 | 自动化浏览器操作发布文章 |
+| `wechat-browser.ts` | 图文发布 | 发布短文 + 多张图片（最多9张） |
+| `wechat-agent-browser.ts` | Agent 浏览器发布 | Agent 模式的浏览器发布 |
+| `md-to-wechat.ts` | Markdown 转换 | 将 Markdown 转换为微信兼容的 HTML |
+| `generate-cover.ts` | 封面生成 | 生成文章封面图（支持多种格式） |
+| `image-utils.ts` | 图片工具 | 图片处理和元数据清洗 |
+| `ensure-deps.ts` | 依赖安装 | 自动检查并安装依赖 |
+| `copy-to-clipboard.ts` | 剪贴板复制 | 复制内容到系统剪贴板 |
+| `paste-from-clipboard.ts` | 剪贴板粘贴 | 从系统剪贴板粘贴内容 |
+| `cdp.ts` | Chrome DevTools | Chrome DevTools Protocol 工具 |
+
+---
+
 ## 命令对照表
 
 ### API 方式发布文章
@@ -296,11 +314,55 @@ Get-ChildItem articles\*.md | ForEach-Object {
 
 ---
 
+### Markdown 扩展功能
+
+本技能内置丰富的 Markdown 扩展插件（位于 `scripts/md/extensions/`）：
+
+**支持的扩展**：
+- **alert** - GitHub 风格提示块（Note, Warning, Important 等）
+- **footnotes** - 脚注支持
+- **katex** - 数学公式渲染（LaTeX 语法）
+- **toc** - 自动生成目录
+- **infographic** - 信息图展示
+- **ruby** - 注音标记（用于日文、中文注音）
+- **slider** - 滑块对比展示
+- **plantuml** - UML 图表渲染
+- **markup** - 标记扩展
+
+**使用示例**：
+```markdown
+<!-- GitHub 风格提示 -->
+> [!NOTE]
+> 这是一个提示
+
+> [!WARNING]
+> 这是一个警告
+
+<!-- 数学公式 -->
+$$
+E = mc^2
+$$
+
+<!-- 目录 -->
+[[toc]]
+
+<!-- 脚注 -->
+这是一个引用[^1]
+
+[^1]: 这是脚注内容
+```
+
+---
+
 ## 参考文档
 
-- [SKILL.md](SKILL.md) - 完整技能文档
+- [SKILL.md](SKILL.md) - 完整技能文档（包含所有工作流程）
 - [CROSS_PLATFORM.md](CROSS_PLATFORM.md) - 跨平台详细说明
 - [README.md](README.md) - 快速开始指南
+- [references/article-posting.md](references/article-posting.md) - 文章发布详细说明
+- [references/image-text-posting.md](references/image-text-posting.md) - 图文发布详细说明
+- [templates/](templates/) - 文章创作模板库
+- [examples/](examples/) - 示例文章
 
 ---
 
