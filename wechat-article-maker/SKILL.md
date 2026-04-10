@@ -18,6 +18,7 @@ wechat-article-maker/
 │   ├── wechat-article.ts    # 浏览器发布逻辑
 │   ├── wechat-browser.ts    # 图文发布逻辑
 │   ├── image-utils.ts       # 图片处理工具（sharp 集成）
+│   ├── base64-utils.ts      # Base64 图片提取工具
 │   ├── generate-cover.ts    # 封面生成逻辑
 │   ├── md-to-wechat.ts      # Markdown 转换逻辑
 │   ├── ensure-deps.ts       # 依赖自动安装
@@ -979,6 +980,25 @@ WECHAT_BROWSER_CHROME_PATH=/path/to/chrome  # 自定义 Chrome 路径
   - `plantuml.ts` - UML 图表
 
 ### 图片处理算法
+
+**Base64 图片提取**（`scripts/base64-utils.ts`）：
+
+自动检测并处理 HTML 中嵌入的 base64 图片：
+
+1. **智能检测**：扫描 HTML 内容，识别 `<img src="data:image/...;base64,...">` 格式的图片
+2. **自动提取**：将 base64 数据解码并保存为本地文件（`extracted-images/base64-*.jpg`）
+3. **路径替换**：将 data URI 替换为相对文件路径，便于后续上传到微信
+4. **哈希命名**：使用 MD5 哈希生成唯一文件名，避免重复和冲突
+
+**处理示例**：
+
+```html
+<!-- 原始 HTML -->
+<img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBD..." alt="示例图片">
+
+<!-- 处理后 -->
+<img src="extracted-images/base64-0-a1b2c3d4.jpg" alt="示例图片">
+```
 
 **元数据清洗**（`scripts/image-utils.ts`）：
 

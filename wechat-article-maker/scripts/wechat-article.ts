@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { launchChrome, tryConnectExisting, findExistingChromeDebugPort, getPageSession, waitForNewTab, clickElement, typeText, evaluate, sleep, type ChromeSession, type CdpConnection } from './cdp.ts';
+import { extractBase64Images, hasBase64Images } from "./base64-utils.js";
 
 const WECHAT_URL = 'https://mp.weixin.qq.com/';
 
@@ -201,22 +202,32 @@ async function parseMarkdownWithPlaceholders(markdownPath: string, theme?: strin
 function parseHtmlMeta(htmlPath: string): { title: string; author: string; summary: string; contentImages: ImageInfo[] } {
   const content = fs.readFileSync(htmlPath, 'utf-8');
 
+  // Extract base64 images if present
+  let processedContent = content;
+  const baseDir = path.dirname(htmlPath);
+  if (hasBase64Images(content)) {
+    console.error('[wechat-article] Found base64 images in HTML, extracting to local files...');
+    const { html: extractedHtml, extractedImages } = extractBase64Images(content, baseDir);
+    processedContent = extractedHtml;
+    console.error(`[wechat-article] Extracted ${extractedImages.length} base64 images`);
+  }
+
   let title = '';
-  const titleMatch = content.match(/<title>([^<]+)<\/title>/i);
+  const titleMatch = processedContent.match(/<title>([^<]+)<\/title>/i);
   if (titleMatch) title = titleMatch[1]!;
 
   let author = '';
-  const authorMatch = content.match(/<meta\s+name=["']author["']\s+content=["']([^"']+)["']/i)
-    || content.match(/<meta\s+content=["']([^"']+)["']\s+name=["']author["']/i);
+  const authorMatch = processedContent.match(/<meta\s+name=["']author["']\s+content=["']([^"']+)["']/i)
+    || processedContent.match(/<meta\s+content=["']([^"']+)["']\s+name=["']author["']/i);
   if (authorMatch) author = authorMatch[1]!;
 
   let summary = '';
-  const descMatch = content.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i)
-    || content.match(/<meta\s+content=["']([^"']+)["']\s+name=["']description["']/i);
+  const descMatch = processedContent.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i)
+    || processedContent.match(/<meta\s+content=["']([^"']+)["']\s+name=["']description["']/i);
   if (descMatch) summary = descMatch[1]!;
 
   if (!summary) {
-    const firstPMatch = content.match(/<p[^>]*>([^<]+)<\/p>/i);
+    const firstPMatch = processedContent.match(/<p[^>]*>([^<]+)<\/p>/i);
     if (firstPMatch) {
       const text = firstPMatch[1]!.replace(/<[^>]+>/g, '').trim();
       if (text.length > 20) {
@@ -249,7 +260,7 @@ function parseHtmlMeta(htmlPath: string): { title: string; author: string; summa
 
   const contentImages: ImageInfo[] = [];
   const imgRegex = /<img[^>]*\ssrc=["']([^"']+)["'][^>]*>/gi;
-  const matches = [...content.matchAll(imgRegex)];
+  const matches = [...processedContent.matchAll(imgRegex)];
   for (const match of matches) {
     const [fullTag, src] = match;
     if (!src || src.startsWith('http')) continue;

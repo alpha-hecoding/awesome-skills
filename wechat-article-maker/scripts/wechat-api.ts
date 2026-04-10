@@ -7,6 +7,7 @@ import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { cleanImage, hasProblematicMetadata, resizeForWeChat } from "./image-utils.js";
+import { extractBase64Images, hasBase64Images } from "./base64-utils.js";
 import hljs from "highlight.js/lib/core";
 import bash from "highlight.js/lib/languages/bash";
 import c from "highlight.js/lib/languages/c";
@@ -978,6 +979,15 @@ function extractHtmlContent(htmlPath: string, shouldInlineCss: boolean = false):
   } else {
     const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
     content = bodyMatch ? bodyMatch[1]!.trim() : html;
+  }
+
+  // Extract base64 images if present (Step 0 - before any other processing)
+  const baseDir = path.dirname(htmlPath);
+  if (hasBase64Images(content)) {
+    console.error("[wechat-api] Found base64 images in HTML, extracting to local files...");
+    const { html: processedHtml, extractedImages } = extractBase64Images(content, baseDir);
+    content = processedHtml;
+    console.error(`[wechat-api] Extracted ${extractedImages.length} base64 images to extracted-images/`);
   }
 
   // Step 1: Highlight code blocks (before page CSS inlining)
