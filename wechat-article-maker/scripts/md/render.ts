@@ -294,14 +294,12 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
   };
 
   const renderer: RendererObject = {
-    heading({ tokens, depth }: Tokens.Heading) {
-      const text = this.parser.parseInline(tokens);
+    heading(text: string, depth: number) {
       const tag = `h${depth}`;
       return styledContent(tag, text);
     },
 
-    paragraph({ tokens }: Tokens.Paragraph): string {
-      const text = this.parser.parseInline(tokens);
+    paragraph(text: string): string {
       const isFigureImage = text.includes("<figure") && text.includes("<img");
       const isEmpty = text.trim() === "";
       if (isFigureImage || isEmpty) {
@@ -310,12 +308,11 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
       return styledContent("p", text);
     },
 
-    blockquote({ tokens }: Tokens.Blockquote): string {
-      const text = this.parser.parse(tokens);
-      return styledContent("blockquote", text);
+    blockquote(body: string): string {
+      return styledContent("blockquote", body);
     },
 
-    code({ text, lang = "" }: Tokens.Code): string {
+    code(code: string, lang: string): string {
       if (lang.startsWith("mermaid")) {
         if (isBrowser) {
           clearTimeout(codeIndex as any);
@@ -330,22 +327,20 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
             }
           }, 0) as any as number;
         }
-        return `<pre class="mermaid">${text}</pre>`;
+        return `<pre class="mermaid">${code}</pre>`;
       }
       const langText = lang.split(" ")[0];
       const isLanguageRegistered = hljs.getLanguage(langText);
       const language = isLanguageRegistered ? langText : "plaintext";
 
-      // 美化 JSON/JSONC 代码块
-      let codeText = text;
+      let codeText = code;
       if (langText === "json" || langText === "jsonc") {
         try {
-          // JSONC 需要移除注释后再解析
-          let cleanJson = text;
+          let cleanJson = code;
           if (langText === "jsonc") {
-            cleanJson = text
-              .replace(/^\s*\/\/.*$/gm, "") // 移除 // 注释
-              .replace(/^\s*\/\*[\s\S]*?\*\//gm, ""); // 移除 /* */ 注释
+            cleanJson = code
+              .replace(/^\s*\/\/.*$/gm, "")
+              .replace(/^\s*\/\*[\s\S]*?\*\//gm, "");
           }
           const parsed = JSON.parse(cleanJson);
           codeText = JSON.stringify(parsed, null, 2);
@@ -367,104 +362,71 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
         const escapedText = codeText.replace(/"/g, "&quot;");
         pendingAttr = ` data-language-pending="${langText}" data-raw-code="${escapedText}" data-show-line-number="${opts.isShowLineNumber}"`;
       }
-      const code = `<code class="language-${lang}"${pendingAttr}>${highlighted}</code>`;
+      const codeEl = `<code class="language-${lang}"${pendingAttr}>${highlighted}</code>`;
 
-      return `<pre class="hljs code__pre">${span}${code}</pre>`;
+      return `<pre class="hljs code__pre">${span}${codeEl}</pre>`;
     },
 
-    codespan({ text }: Tokens.Codespan): string {
+    codespan(text: string): string {
       const escapedText = escapeHtml(text);
       return styledContent("codespan", escapedText, "code");
     },
 
-    list({ ordered, items, start = 1 }: Tokens.List) {
-      listOrderedStack.push(ordered);
-      listCounters.push(Number(start));
-
-      const html = items.map((item) => this.listitem(item)).join("");
-
-      listOrderedStack.pop();
-      listCounters.pop();
-
-      return styledContent(ordered ? "ol" : "ul", html);
+    list(body: string, ordered: boolean) {
+      return styledContent(ordered ? "ol" : "ul", body);
     },
 
-    listitem(token: Tokens.ListItem) {
-      const ordered = listOrderedStack[listOrderedStack.length - 1];
-      const idx = listCounters[listCounters.length - 1]!;
-
-      listCounters[listCounters.length - 1] = idx + 1;
-
-      const prefix = ordered ? "" : "• ";
-
-      let content: string;
-      try {
-        content = this.parser.parseInline(token.tokens);
-      } catch {
-        content = this.parser
-          .parse(token.tokens)
-          .replace(/^<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/, "$1");
-      }
-
-      return styledContent("listitem", `${prefix}${content}`, "li");
+    listitem(text: string) {
+      return styledContent("listitem", text, "li");
     },
 
-    image({ href, title, text }: Tokens.Image): string {
+    image(href: string, title: string, text: string): string {
       const newText = opts.legend ? transform(opts.legend, text, title) : "";
       const subText = newText ? styledContent("figcaption", newText) : "";
       const titleAttr = title ? ` title="${title}"` : "";
       return `<figure><img src="${href}"${titleAttr} alt="${text}"/>${subText}</figure>`;
     },
 
-    link({ href, title, text, tokens }: Tokens.Link): string {
-      const parsedText = this.parser.parseInline(tokens);
+    link(href: string, title: string, text: string): string {
       if (/^https?:\/\/mp\.weixin\.qq\.com/.test(href)) {
-        return `<a href="${href}" title="${title || text}">${parsedText}</a>`;
+        return `<a href="${href}" title="${title || text}">${text}</a>`;
       }
       if (href === text) {
-        return parsedText;
+        return text;
       }
       if (opts.citeStatus) {
         const ref = addFootnote(title || text, href);
-        return `<a href="${href}" title="${title || text}">${parsedText}<sup>[${ref}]</sup></a>`;
+        return `<a href="${href}" title="${title || text}">${text}<sup>[${ref}]</sup></a>`;
       }
-      return `<a href="${href}" title="${title || text}">${parsedText}</a>`;
+      return `<a href="${href}" title="${title || text}">${text}</a>`;
     },
 
-    strong({ tokens }: Tokens.Strong): string {
-      return styledContent("strong", this.parser.parseInline(tokens));
+    strong(text: string): string {
+      return styledContent("strong", text);
     },
 
-    em({ tokens }: Tokens.Em): string {
-      return styledContent("em", this.parser.parseInline(tokens));
+    em(text: string): string {
+      return styledContent("em", text);
     },
 
-    table({ header, rows }: Tokens.Table): string {
-      const headerRow = header
-        .map((cell) => {
-          const text = this.parser.parseInline(cell.tokens);
-          return styledContent("th", text);
-        })
-        .join("");
-      const body = rows
-        .map((row) => {
-          const rowContent = row.map((cell) => this.tablecell(cell)).join("");
-          return styledContent("tr", rowContent);
-        })
-        .join("");
+    table(header: string, body: string): string {
       return `
         <section style="max-width: 100%; overflow: auto">
           <table class="preview-table">
-            <thead>${headerRow}</thead>
+            <thead>${header}</thead>
             <tbody>${body}</tbody>
           </table>
         </section>
       `;
     },
 
-    tablecell(token: Tokens.TableCell): string {
-      const text = this.parser.parseInline(token.tokens);
-      return styledContent("td", text);
+    tablecell(text: string, flags: { header: boolean; align: string }): string {
+      const tag = flags.header ? "th" : "td";
+      return styledContent(tag, text);
+    },
+
+    tablerow({ text }: Tokens.TableRow): string {
+      return styledContent("tr", text);
     },
 
     hr(_: Tokens.Hr): string {
