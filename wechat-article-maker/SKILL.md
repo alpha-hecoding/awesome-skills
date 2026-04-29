@@ -21,6 +21,7 @@ wechat-article-maker/
 │   ├── base64-utils.ts      # Base64 图片提取工具
 │   ├── generate-cover.ts    # 封面生成逻辑
 │   ├── md-to-wechat.ts      # Markdown 转换逻辑
+│   ├── summary-utils.ts     # 文章摘要工具
 │   ├── ensure-deps.ts       # 依赖自动安装
 │   └── md/                  # Markdown 渲染引擎
 │       ├── render.ts

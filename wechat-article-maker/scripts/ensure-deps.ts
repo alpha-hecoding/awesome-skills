@@ -15,6 +15,7 @@ const DEPENDENCY_MAP: Record<string, string[]> = {
     "marked",
     "reading-time",
     "juice",
+    "jsonc-parser",
   ],
   "generate-cover.ts": ["@napi-rs/canvas", "sharp"],
   "wechat-api.ts": ["sharp", "highlight.js"],

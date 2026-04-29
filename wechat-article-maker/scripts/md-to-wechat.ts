@@ -8,6 +8,7 @@ import https from 'node:https';
 import http from 'node:http';
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
+import { extractSummaryFromMarkdown } from './summary-utils.js';
 
 interface ImageInfo {
   placeholder: string;
@@ -141,27 +142,7 @@ export async function convertMarkdown(markdownPath: string, options?: { title?: 
   let summary = frontmatter.description || frontmatter.summary || '';
 
   if (!summary) {
-    const lines = bodyWithoutTitle.split('\n');
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      if (trimmed.startsWith('#')) continue;
-      if (trimmed.startsWith('![')) continue;
-      if (trimmed.startsWith('>')) continue;
-      if (trimmed.startsWith('-') || trimmed.startsWith('*')) continue;
-      if (/^\d+\./.test(trimmed)) continue;
-
-      const cleanText = trimmed
-        .replace(/\*\*(.+?)\*\*/g, '$1')
-        .replace(/\*(.+?)\*/g, '$1')
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-        .replace(/`([^`]+)`/g, '$1');
-
-      if (cleanText.length > 20) {
-        summary = cleanText.length > 120 ? cleanText.slice(0, 117) + '...' : cleanText;
-        break;
-      }
-    }
+    summary = extractSummaryFromMarkdown(bodyWithoutTitle);
   }
 
   const images: Array<{ src: string; placeholder: string }> = [];

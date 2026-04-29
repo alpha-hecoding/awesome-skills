@@ -1,5 +1,5 @@
 import type { MarkedExtension, Tokens } from 'marked'
-import { deflateSync } from 'fflate'
+import { deflateRawSync } from 'node:zlib'
 
 export interface PlantUMLOptions {
   /**
@@ -99,18 +99,12 @@ function encode64(data: string): string {
  */
 function performDeflate(input: string): string {
   try {
-    // 将字符串转换为字节数组
     const inputBytes = new TextEncoder().encode(input)
-
-    // 使用 fflate 进行 deflate 压缩（最高压缩级别 9）
-    const compressed = deflateSync(inputBytes, { level: 9 })
-
-    // 将压缩后的字节数组转换为二进制字符串
+    const compressed = deflateRawSync(inputBytes, { level: 9 })
     return String.fromCharCode(...compressed)
   }
   catch (error) {
     console.warn(`Deflate compression failed:`, error)
-    // 如果压缩失败，返回原始输入
     return input
   }
 }

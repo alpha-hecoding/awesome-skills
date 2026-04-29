@@ -8,7 +8,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import frontMatter from "front-matter";
 import hljs from "highlight.js/lib/core";
-import { marked, type RendererObject, type Tokens } from "marked";
+import { parse as parseJsonc } from "jsonc-parser";
+import { Marked, type RendererObject, type Tokens } from "marked";
 import readingTime, { type ReadTimeResults } from "reading-time";
 
 import {
@@ -105,11 +106,6 @@ function resolveThemeNames(): ThemeName[] {
 
 const THEME_NAMES: ThemeName[] = resolveThemeNames();
 
-marked.setOptions({
-  breaks: true,
-});
-marked.use(markedSlider());
-
 interface IOpts {
   legend?: string;
   citeStatus?: boolean;
@@ -128,6 +124,7 @@ interface RendererAPI {
     markdownContent: string;
     readingTime: ReadTimeResults;
   };
+  renderMarkdown: (markdown: string) => string;
   buildReadingTime: (reading: ReadTimeResults) => string;
   buildFootnotes: () => string;
   buildAddition: () => string;
@@ -223,23 +220,60 @@ function parseFrontMatterAndContent(markdownText: string): ParseResult {
   }
 }
 
+function formatJsonLikeCode(code: string, langText: string): string {
+  if (langText === "json") {
+    const parsed = JSON.parse(code);
+    return JSON.stringify(parsed, null, 2);
+  }
+
+  if (langText === "jsonc") {
+    const errors: { error: number }[] = [];
+    const parsed = parseJsonc(code, errors, {
+      allowTrailingComma: true,
+      disallowComments: false,
+    });
+
+    if (errors.length === 0) {
+      return JSON.stringify(parsed, null, 2);
+    }
+  }
+
+  return code;
+}
+
 export function initRenderer(opts: IOpts = {}): RendererAPI {
   const footnotes: [number, string, string][] = [];
   let footnoteIndex = 0;
   let codeIndex = 0;
-  const listOrderedStack: boolean[] = [];
-  const listCounters: number[] = [];
   const isBrowser = typeof window !== "undefined";
+  const tocHeadingIds = new Map<string, number>();
 
   function getOpts(): IOpts {
     return opts;
   }
 
-  function styledContent(styleLabel: string, content: string, tagName?: string): string {
+  function slugifyHeading(text: string): string {
+    return text
+      .toLowerCase()
+      .replace(/<[^>]*>/g, "")
+      .replace(/&[^;]+;/g, "")
+      .replace(/[^\p{Letter}\p{Number}\s-]+/gu, "")
+      .trim()
+      .replace(/\s+/g, "-") || "section";
+  }
+
+  function getHeadingId(text: string): string {
+    const base = slugifyHeading(text);
+    const count = tocHeadingIds.get(base) ?? 0;
+    tocHeadingIds.set(base, count + 1);
+    return count === 0 ? base : `${base}-${count}`;
+  }
+
+  function styledContent(styleLabel: string, content: string, tagName?: string, extraAttrs = ""): string {
     const tag = tagName ?? styleLabel;
     const className = `${styleLabel.replace(/_/g, "-")}`;
     const headingAttr = /^h\d$/.test(tag) ? " data-heading=\"true\"" : "";
-    return `<${tag} class="${className}"${headingAttr}>${content}</${tag}>`;
+    return `<${tag} class="${className}"${headingAttr}${extraAttrs}>${content}</${tag}>`;
   }
 
   function addFootnote(title: string, link: string): number {
@@ -255,17 +289,12 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
   function reset(newOpts: Partial<IOpts>): void {
     footnotes.length = 0;
     footnoteIndex = 0;
+    tocHeadingIds.clear();
     setOptions(newOpts);
   }
 
   function setOptions(newOpts: Partial<IOpts>): void {
     opts = { ...opts, ...newOpts };
-    marked.use(markedAlert());
-    if (isBrowser) {
-      marked.use(MDKatex({ nonStandard: true }, true));
-    }
-    marked.use(markedMarkup());
-    marked.use(markedInfographic({ themeMode: opts.themeMode }));
   }
 
   function buildReadingTime(readingTimeResult: ReadTimeResults): string {
@@ -296,7 +325,8 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
   const renderer: RendererObject = {
     heading(text: string, depth: number) {
       const tag = `h${depth}`;
-      return styledContent(tag, text);
+      const headingId = getHeadingId(text);
+      return styledContent(tag, text, tag, ` id="${headingId}"`);
     },
 
     paragraph(text: string): string {
@@ -308,11 +338,12 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
       return styledContent("p", text);
     },
 
-    blockquote(body: string): string {
-      return styledContent("blockquote", body);
+    blockquote(text: string): string {
+      return styledContent("blockquote", text);
     },
 
-    code(code: string, lang: string): string {
+    code(code: string, infostring?: string): string {
+      const lang = infostring ?? "";
       if (lang.startsWith("mermaid")) {
         if (isBrowser) {
           clearTimeout(codeIndex as any);
@@ -336,16 +367,8 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
       let codeText = code;
       if (langText === "json" || langText === "jsonc") {
         try {
-          let cleanJson = code;
-          if (langText === "jsonc") {
-            cleanJson = code
-              .replace(/^\s*\/\/.*$/gm, "")
-              .replace(/^\s*\/\*[\s\S]*?\*\//gm, "");
-          }
-          const parsed = JSON.parse(cleanJson);
-          codeText = JSON.stringify(parsed, null, 2);
+          codeText = formatJsonLikeCode(code, langText);
         } catch (e) {
-          // 解析失败时使用原始文本
         }
       }
 
@@ -360,11 +383,14 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
       let pendingAttr = "";
       if (!isLanguageRegistered && langText !== "plaintext") {
         const escapedText = codeText.replace(/"/g, "&quot;");
-        pendingAttr = ` data-language-pending="${langText}" data-raw-code="${escapedText}" data-show-line-number="${opts.isShowLineNumber}"`;
+        const showLineNumberAttr = opts.isShowLineNumber === undefined
+          ? ""
+          : ` data-show-line-number="${opts.isShowLineNumber}"`;
+        pendingAttr = ` data-language-pending="${langText}" data-raw-code="${escapedText}"${showLineNumberAttr}`;
       }
-      const codeEl = `<code class="language-${lang}"${pendingAttr}>${highlighted}</code>`;
+      const codeHtml = `<code class="language-${lang}"${pendingAttr}>${highlighted}</code>`;
 
-      return `<pre class="hljs code__pre">${span}${codeEl}</pre>`;
+      return `<pre class="hljs code__pre">${span}${codeHtml}</pre>`;
     },
 
     codespan(text: string): string {
@@ -376,18 +402,22 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
       return styledContent(ordered ? "ol" : "ul", body);
     },
 
-    listitem(text: string) {
-      return styledContent("listitem", text, "li");
+    listitem(text: string, task: boolean, checked: boolean) {
+      if (!task) {
+        return styledContent("listitem", text, "li");
+      }
+      const checkbox = `<input type="checkbox" disabled${checked ? " checked" : ""}> `;
+      return styledContent("listitem", `${checkbox}${text}`, "li");
     },
 
-    image(href: string, title: string, text: string): string {
+    image(href: string, title: string | null, text: string): string {
       const newText = opts.legend ? transform(opts.legend, text, title) : "";
       const subText = newText ? styledContent("figcaption", newText) : "";
       const titleAttr = title ? ` title="${title}"` : "";
       return `<figure><img src="${href}"${titleAttr} alt="${text}"/>${subText}</figure>`;
     },
 
-    link(href: string, title: string, text: string): string {
+    link(href: string, title: string | null | undefined, text: string): string {
       if (/^https?:\/\/mp\.weixin\.qq\.com/.test(href)) {
         return `<a href="${href}" title="${title || text}">${text}</a>`;
       }
@@ -420,36 +450,36 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
       `;
     },
 
-    tablecell(text: string, flags: { header: boolean; align: string }): string {
-      const tag = flags.header ? "th" : "td";
-      return styledContent(tag, text);
+    tablecell(text: string, flags: { header: boolean; align: "center" | "left" | "right" | null }): string {
+      const tagName = flags.header ? "th" : "td";
+      return styledContent(tagName, text);
     },
 
-    tablerow({ text }: Tokens.TableRow): string {
-      return styledContent("tr", text);
-    },
-
-    hr(_: Tokens.Hr): string {
+    hr(): string {
       return styledContent("hr", "");
     },
   };
 
-  marked.use({ renderer });
-  marked.use(markedMarkup());
-  marked.use(markedToc());
-  marked.use(markedSlider());
-  marked.use(markedAlert({}));
-  if (isBrowser) {
-    marked.use(MDKatex({ nonStandard: true }, true));
+  function createMarkedInstance(): Marked {
+    const instance = new Marked({ breaks: true });
+    instance.use({ renderer });
+    instance.use(markedMarkup());
+    instance.use(markedToc());
+    instance.use(markedSlider());
+    instance.use(markedAlert({}));
+    if (isBrowser) {
+      instance.use(MDKatex({ nonStandard: true }, true));
+    }
+    instance.use(markedFootnotes());
+    instance.use(
+      markedPlantUML({
+        inlineSvg: isBrowser,
+      })
+    );
+    instance.use(markedInfographic());
+    instance.use(markedRuby());
+    return instance;
   }
-  marked.use(markedFootnotes());
-  marked.use(
-    markedPlantUML({
-      inlineSvg: isBrowser,
-    })
-  );
-  marked.use(markedInfographic());
-  marked.use(markedRuby());
 
   return {
     buildAddition,
@@ -457,6 +487,11 @@ export function initRenderer(opts: IOpts = {}): RendererAPI {
     setOptions,
     reset,
     parseFrontMatterAndContent,
+    renderMarkdown(markdown: string) {
+      tocHeadingIds.clear();
+      const markedInstance = createMarkedInstance();
+      return markedInstance.parse(markdown) as string;
+    },
     buildReadingTime,
     createContainer(content: string) {
       return styledContent("container", content, "section");
@@ -534,7 +569,7 @@ function renderMarkdown(raw: string, renderer: RendererAPI): {
   const { markdownContent, readingTime: readingTimeResult } =
     renderer.parseFrontMatterAndContent(raw);
 
-  const html = marked.parse(markdownContent) as string;
+  const html = renderer.renderMarkdown(markdownContent);
 
   return { html, readingTime: readingTimeResult };
 }

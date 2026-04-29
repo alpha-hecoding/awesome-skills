@@ -4,7 +4,25 @@ import type { MarkedExtension } from 'marked'
  * marked 插件：支持 [TOC] 语法，自动生成嵌套目录
  */
 export function markedToc(): MarkedExtension {
-  let headings: { text: string, depth: number, index: number }[] = []
+  let headings: { text: string, depth: number, id: string }[] = []
+  let headingIds = new Map<string, number>()
+
+  function slugifyHeading(text: string): string {
+    return text
+      .toLowerCase()
+      .replace(/<[^>]*>/g, ``)
+      .replace(/&[^;]+;/g, ``)
+      .replace(/[^\p{Letter}\p{Number}\s-]+/gu, ``)
+      .trim()
+      .replace(/\s+/g, `-`) || `section`
+  }
+
+  function getHeadingId(text: string): string {
+    const base = slugifyHeading(text)
+    const count = headingIds.get(base) ?? 0
+    headingIds.set(base, count + 1)
+    return count === 0 ? base : `${base}-${count}`
+  }
 
   let firstToken = true
 
@@ -12,13 +30,14 @@ export function markedToc(): MarkedExtension {
     walkTokens(token) {
       if (firstToken) {
         headings = []
+        headingIds = new Map()
         firstToken = false
       }
       if (token.type === `heading`) {
         const text = token.text || ``
         const depth = token.depth || 1
-        const index = headings.length
-        headings.push({ text, depth, index })
+        const id = getHeadingId(text)
+        headings.push({ text, depth, id })
       }
     },
     extensions: [
@@ -31,7 +50,7 @@ export function markedToc(): MarkedExtension {
           return match ? match.index : undefined
         },
         tokenizer(src) {
-          const match = /^\[TOC\]/.exec(src)
+          const match = /^\s*\[TOC\]\s*(?:\r?\n|$)/.exec(src)
           if (match) {
             return {
               type: `toc`,
@@ -44,7 +63,7 @@ export function markedToc(): MarkedExtension {
             return ``
           let html = `<nav class="markdown-toc"><ul class="toc-ul toc-level-1 pl-4 border-l ml-2">`
           let lastDepth = 1
-          headings.forEach(({ text, depth, index }) => {
+          headings.forEach(({ text, depth, id }) => {
             if (depth > lastDepth) {
               for (let i = lastDepth + 1; i <= depth; i++) {
                 html += `<ul class="toc-ul toc-level-${i} pl-4 border-l ml-2">`
@@ -55,7 +74,7 @@ export function markedToc(): MarkedExtension {
                 html += `</ul>`
               }
             }
-            html += `<li class="toc-li toc-level-${depth} mb-1"><a class="text-gray-700 hover:text-blue-600 underline transition-colors" href="#${index}">${text}</a></li>`
+            html += `<li class="toc-li toc-level-${depth} mb-1"><a class="text-gray-700 hover:text-blue-600 underline transition-colors" href="#${id}">${text}</a></li>`
             lastDepth = depth
           })
 

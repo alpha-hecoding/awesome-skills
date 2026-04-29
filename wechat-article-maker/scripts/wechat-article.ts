@@ -5,6 +5,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { launchChrome, tryConnectExisting, findExistingChromeDebugPort, getPageSession, waitForNewTab, clickElement, typeText, evaluate, sleep, type ChromeSession, type CdpConnection } from './cdp.ts';
 import { extractBase64Images, hasBase64Images } from "./base64-utils.js";
+import { extractSummaryFromHtml } from './summary-utils.js';
 
 const WECHAT_URL = 'https://mp.weixin.qq.com/';
 
@@ -227,13 +228,7 @@ function parseHtmlMeta(htmlPath: string): { title: string; author: string; summa
   if (descMatch) summary = descMatch[1]!;
 
   if (!summary) {
-    const firstPMatch = processedContent.match(/<p[^>]*>([^<]+)<\/p>/i);
-    if (firstPMatch) {
-      const text = firstPMatch[1]!.replace(/<[^>]+>/g, '').trim();
-      if (text.length > 20) {
-        summary = text.length > 120 ? text.slice(0, 117) + '...' : text;
-      }
-    }
+    summary = extractSummaryFromHtml(processedContent);
   }
 
   const mdPath = htmlPath.replace(/\.html$/i, '.md');
