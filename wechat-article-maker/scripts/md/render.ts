@@ -41,7 +41,7 @@ const EXTERNAL_THEME_DIR =
 const FALLBACK_THEMES: ThemeName[] = ["default", "grace", "simple"];
 
 const DEFAULT_STYLE = {
-  primaryColor: "#0F4C81",
+  primaryColor: "#35B378",
   fontFamily:
     "-apple-system-font,BlinkMacSystemFont, Helvetica Neue, PingFang SC, Hiragino Sans GB , Microsoft YaHei UI , Microsoft YaHei ,Arial,sans-serif",
   fontSize: "16px",
@@ -514,7 +514,7 @@ function printUsage(): void {
 
 function parseArgs(argv: string[]): CliOptions | null {
   let inputPath = "";
-  let theme: ThemeName = "default";
+  let theme: ThemeName = "grace";
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];

@@ -116,7 +116,7 @@ function parseFrontmatter(content: string): { frontmatter: Record<string, string
 export async function convertMarkdown(markdownPath: string, options?: { title?: string; theme?: string }): Promise<ParsedResult> {
   const baseDir = path.dirname(markdownPath);
   const content = fs.readFileSync(markdownPath, 'utf-8');
-  const theme = options?.theme ?? 'default';
+  const theme = options?.theme ?? 'grace';
 
   const { frontmatter, body } = parseFrontmatter(content);
 

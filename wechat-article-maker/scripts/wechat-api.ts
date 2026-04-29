@@ -444,7 +444,7 @@ function parseFrontmatter(content: string): { frontmatter: Record<string, string
   return { frontmatter, body: match[2]! };
 }
 
-function renderMarkdownToHtml(markdownPath: string, theme: string = "default"): string {
+function renderMarkdownToHtml(markdownPath: string, theme: string = "grace"): string {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const renderScript = path.join(__dirname, "md", "render.ts");
@@ -1024,7 +1024,7 @@ Options:
   --title <title>     Override title
   --author <name>     Author name (max 16 chars)
   --summary <text>    Article summary/digest (max 128 chars)
-  --theme <name>      Theme name for markdown (default, grace, simple). Default: default
+  --theme <name>      Theme name for markdown (default, grace, simple). Default: grace
   --cover <path>      Cover image path (local or URL)
   --inline-css        Inline CSS styles for HTML input (preserves original styling)
   --dry-run           Parse and render only, don't publish
@@ -1088,7 +1088,7 @@ function parseArgs(argv: string[]): CliArgs {
     filePath: "",
     isHtml: false,
     articleType: "news",
-    theme: "default",
+    theme: "grace",
     inlineCss: false,
     dryRun: false,
   };
