@@ -1,10 +1,10 @@
 # awesome-skills
 
-Claude Code 技能集合 - 微信公众号文章创作与发布工具
+Claude Code 技能集合 - 微信公众号文章创作与发布、Git 提交辅助
 
 ## 概述
 
-本仓库包含用于微信公众号文章创作与发布的 Claude Code 技能：
+本仓库包含一组 Claude Code 技能，覆盖微信公众号文章创作与发布、Git 提交辅助等场景：
 
 ### 1. wechat-article-maker (TypeScript)
 
@@ -72,6 +72,21 @@ python3 scripts/create_cover.py --title "标题" --style minimal-grid --output c
 python3 scripts/publish_draft.py --title "标题" --content-file article.html --cover cover.jpg
 ```
 
+### 3. git-commit-helper
+
+Git 提交助手技能，把本次任务的变更整理成语义清晰的提交，产出"类型: 一句话简述"格式的简洁中文提交信息。
+
+**核心功能**：
+- 🎯 范围界定 - 只提交本次任务的变更，不碰工作区无关遗留改动
+- ✂️ 智能拆分 - 多阶段任务按意图拆分为多次提交
+- 📝 规范化信息 - `类型: 一句话简述` 格式，内置类型选择表与示例
+- 🛡️ 安全边界 - 不自动提交、不 push、不 `git add -A`、敏感文件拦截
+
+**触发方式**：仅在用户明确下达提交指令（如"提交"、"commit"）时执行。
+
+**详细文档**：
+- [git-commit-helper/SKILL.md](git-commit-helper/SKILL.md) - 完整技能文档
+
 ## 目录结构
 
 ```
@@ -87,11 +102,12 @@ awesome-skills/
 │   ├── scripts/              # Python 脚本
 │   ├── assets/               # 资源文件
 │   └── ...
+├── git-commit-helper/        # Git 提交助手
 ├── CLAUDE.md                 # Claude Code 项目配置
 └── README.md                 # 项目说明
 ```
 
-## 功能对比
+## 微信技能功能对比
 
 | 功能 | wechat-article-maker | wechat-article-skill |
 |------|---------------------|---------------------|
@@ -117,6 +133,11 @@ awesome-skills/
   - 仅需要生成封面图
   - 使用 Python 环境
   - 需要简单的 API 发布功能
+
+- **选择 git-commit-helper** 如果你：
+  - 需要规范、易读的 git 提交信息
+  - 多阶段任务需要自动拆分提交
+  - 需要提交安全约束（不自动提交、不 push）
 
 ## 许可证
 
